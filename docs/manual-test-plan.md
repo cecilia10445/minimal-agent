@@ -1,601 +1,601 @@
-# Manual Test Plan — minimal_agent
+# 手动测试计划 — minimal_agent
 
-This document records all manually executed test scenarios for the minimal_agent project.
+本文档记录 minimal_agent 项目所有手动执行的测试场景。
 
-Status labels:
-- ✅ **Passed** — test completed successfully
-- ❌ **Failed** — test exposed a defect (now fixed, needs re-test)
-- 🔄 **Needs re-test** — failed scenario after fix
-- ⏳ **Not executed** — planned but not yet run
-- ❓ **Under discussion** — open design question
-
----
-
-## A. Basic Agent Loop
-
-### A-001: Direct greeting
-| Field | Value |
-|---|---|
-| Purpose | Verify agent answers directly without tool calls |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | Fresh session, knowledge_docs with some files |
-| Execution | `python -m src.cli --user-id test --session-id test-a001` |
-| User input | `你好，你能做什么？` |
-| Expected tool chain | (none — direct answer) |
-| Expected result | Agent responds with greeting and capability summary |
-| Actual result | ✅ Agent returned greeting with tool list |
-| Status | ✅ Passed |
-| Cleanup | None |
-
-### A-002: Calculator tool
-| Field | Value |
-|---|---|
-| Purpose | Verify calculator tool invocation |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | Fresh session |
-| User input | `请使用计算器计算 89 的平方。` |
-| Expected tool chain | calculator |
-| Expected result | Answer includes 7921 |
-| Actual result | ✅ Calculator called, 89^2 = 7921 |
-| Status | ✅ Passed |
-| Cleanup | None |
-
-### A-003: search + todo_add multi-tool
-| Field | Value |
-|---|---|
-| Purpose | Verify chaining search then todo_add |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | Fresh session |
-| User input | `搜索一下 Agent Runtime 的定义，然后添加到待办` |
-| Expected tool chain | search → todo_add |
-| Expected result | Search finds definition, todo is added |
-| Actual result | ✅ search found definition, todo added |
-| Status | ✅ Passed |
-| Cleanup | `/new` or ignore |
-
-### A-004: Todo list with follow-up
-| Field | Value |
-|---|---|
-| Purpose | Verify listing after add |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | Previous session has todos |
-| User input | `查看我的待办` |
-| Expected tool chain | todo_list |
-| Expected result | Lists all pending todos |
-| Status | ✅ Passed |
-| Cleanup | None |
-
-### A-005: Max steps / tool error
-| Field | Value |
-|---|---|
-| Purpose | These are covered by automated tests (test_agent.py) |
-| Type | Automated |
-| API required | No |
-| Status | ✅ Covered by test_agent.py |
+状态标签：
+- ✅ **通过** — 测试成功完成
+- ❌ **失败** — 测试发现缺陷（已修复，需要重新测试）
+- 🔄 **需要重新测试** — 修复后需要重新验证的场景
+- ⏳ **未执行** — 已计划但尚未运行
+- ❓ **讨论中** — 开放的设计问题
 
 ---
 
-## B. Session and Persistence
+## A. 基本 Agent 循环
 
-### B-001: Same session follow-up
-| Field | Value |
+### A-001：直接问候
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify agent remembers context within same session |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | Fresh session |
-| User input | Round 1: `我的名字是张三` → Round 2: `我叫什么名字？` |
-| Expected tool chain | Round 1: direct answer; Round 2: direct answer from memory |
-| Expected result | Round 2 correctly recalls "张三" |
-| Actual result | ✅ Agent remembered name across turns |
-| Status | ✅ Passed |
-| Cleanup | None |
+| 目的 | 验证 Agent 直接回答，无需工具调用 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | 新会话，knowledge_docs 中有文件 |
+| 执行 | `python -m src.cli --user-id test --session-id test-a001` |
+| 用户输入 | `你好，你能做什么？` |
+| 预期工具链 | （无 —— 直接回答） |
+| 预期结果 | Agent 回复问候语并介绍能力 |
+| 实际结果 | ✅ Agent 返回问候语并列出工具 |
+| 状态 | ✅ 通过 |
+| 清理 | 无 |
 
-### B-002: CLI restart session recovery
-| Field | Value |
+### A-002：计算器工具
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify session persistence across CLI restart |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | Previous session with todos and conversation |
-| Execution | Exit CLI, restart with same `--user-id test --session-id test-b002` |
-| User input | `查看我的待办` |
-| Expected result | Previous todos restored |
-| Actual result | ✅ Todos persisted after restart |
-| Status | ✅ Passed |
-| Cleanup | None |
+| 目的 | 验证计算器工具调用 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | 新会话 |
+| 用户输入 | `请使用计算器计算 89 的平方。` |
+| 预期工具链 | calculator |
+| 预期结果 | 回答包含 7921 |
+| 实际结果 | ✅ 计算器被调用，89^2 = 7921 |
+| 状态 | ✅ 通过 |
+| 清理 | 无 |
 
-### B-003: Same user, different session isolation
-| Field | Value |
+### A-003：search + todo_add 多工具
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify `/new` creates isolated session |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | Session exists with todos |
-| Steps | `/new` → check todos |
-| Expected result | New session has no todos |
-| Actual result | ✅ New session empty |
-| Status | ✅ Passed |
-| Cleanup | None |
+| 目的 | 验证 search 后接 todo_add 的链式调用 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | 新会话 |
+| 用户输入 | `搜索一下 Agent Runtime 的定义，然后添加到待办` |
+| 预期工具链 | search → todo_add |
+| 预期结果 | Search 找到定义，待办已添加 |
+| 实际结果 | ✅ search 找到了定义，待办已添加 |
+| 状态 | ✅ 通过 |
+| 清理 | `/new` 或忽略 |
 
-### B-004: Different user, same session_id isolation
-| Field | Value |
+### A-004：待办列表与追问
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify user isolation |
-| Type | Automated |
-| API required | No |
-| Status | ✅ Covered by tests |
+| 目的 | 验证添加后列出的功能 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | 之前会话有待办事项 |
+| 用户输入 | `查看我的待办` |
+| 预期工具链 | todo_list |
+| 预期结果 | 列出所有待办 |
+| 状态 | ✅ 通过 |
+| 清理 | 无 |
 
-### B-005: /whoami
-| Field | Value |
+### A-005：最大步骤 / 工具错误
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify identity display |
-| Type | Manual |
-| API required | No |
-| Steps | `/whoami` |
-| Expected result | Shows user_id, session_id, db_path |
-| Actual result | ✅ Correct display |
-| Status | ✅ Passed |
-
-### B-006: SQLite cross-process recovery
-| Field | Value |
-|---|---|
-| Purpose | Verify different Python process reads same DB |
-| Type | Manual |
-| API required | No |
-| Status | ✅ Covered by test_sqlite_session.py |
+| 目的 | 已由自动化测试覆盖（test_agent.py） |
+| 类型 | 自动化 |
+| 需要 API | 否 |
+| 状态 | ✅ 由 test_agent.py 覆盖 |
 
 ---
 
-## C. Document Dynamic Scan
+## B. 会话与持久化
 
-### C-001: Dynamic new file detected
-| Field | Value |
+### B-001：同一会话追问
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify list_docs detects newly created file without restart |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | CLI running, knowledge_docs exists |
-| Steps | Create `唯一测试文档.md` before start, then ask `请列出所有本地文档` |
-| Expected tool chain | list_docs |
-| Expected result | New file appears in listing |
-| Actual result | ✅ list_docs returned correct listing |
-| Status | ✅ Passed |
-| Cleanup | Delete temp file |
+| 目的 | 验证 Agent 在同一会话中记住上下文 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | 新会话 |
+| 用户输入 | 第 1 轮：`我的名字是张三` → 第 2 轮：`我叫什么名字？` |
+| 预期工具链 | 第 1 轮：直接回答；第 2 轮：从记忆直接回答 |
+| 预期结果 | 第 2 轮正确回忆起"张三" |
+| 实际结果 | ✅ Agent 跨轮次记住了名字 |
+| 状态 | ✅ 通过 |
+| 清理 | 无 |
 
-### C-002: Read newly created dynamic file
-| Field | Value |
+### B-002：CLI 重启会话恢复
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify read_docs works on dynamically added file |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | `__agent_dynamic_demo__.md` exists with known content |
-| User input | `读取 __agent_dynamic_demo__.md` |
-| Expected tool chain | read_docs |
-| Expected result | Content displayed correctly |
-| Actual result | ✅ Content read successfully |
-| Status | ✅ Passed |
-| Cleanup | Delete temp file |
+| 目的 | 验证跨 CLI 重启的会话持久化 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | 之前会话有待办和对话记录 |
+| 执行 | 退出 CLI，以相同 `--user-id test --session-id test-b002` 重启 |
+| 用户输入 | `查看我的待办` |
+| 预期结果 | 之前的待办已恢复 |
+| 实际结果 | ✅ 重启后待办仍然存在 |
+| 状态 | ✅ 通过 |
+| 清理 | 无 |
 
-### C-003: search_docs on dynamic content
-| Field | Value |
+### B-003：同一用户，不同会话隔离
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify search_docs finds content in dynamic file |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | Dynamic file with keyword "蓝色鲸鱼2468" |
-| User input | `搜索蓝色鲸鱼2468` |
-| Expected tool chain | search_docs |
-| Expected result | Dynamic file found |
-| Actual result | ✅ Search found the keyword |
-| Status | ✅ Passed |
-| Cleanup | None |
+| 目的 | 验证 `/new` 创建隔离的会话 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | 会话存在且有未完成任务 |
+| 步骤 | `/new` → 检查待办 |
+| 预期结果 | 新会话没有待办 |
+| 实际结果 | ✅ 新会话为空 |
+| 状态 | ✅ 通过 |
+| 清理 | 无 |
 
-### C-004: Dynamic delete detected
-| Field | Value |
+### B-004：不同用户，相同 session_id 隔离
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify list_docs reflects file deletion without restart |
-| Type | Manual — CLI |
-| API required | Yes |
-| Steps | 1. Create `临时新增测试.md`; 2. list_docs shows 5 files; 3. Delete file; 4. Ask "目前本地知识库有哪些文档?" |
-| Expected tool chain | list_docs (must re-call, not use history) |
-| Expected result | Second listing shows 4 files |
-| Actual result | ❌ Agent used cached history, reported 5 instead of 4. Only re-called after user pushed "你确定吗". **Defect #1 identified.** |
-| Status | ❌ **Defect #1 — SEE FIX** |
-| Cleanup | Ensure temp file is deleted |
+| 目的 | 验证用户隔离 |
+| 类型 | 自动化 |
+| 需要 API | 否 |
+| 状态 | ✅ 由测试覆盖 |
 
-### C-005: Dynamic delete — re-test after fix
-| Field | Value |
+### B-005：/whoami
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify list_docs is re-called when asking current state |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | Fix applied for freshness rules |
-| Status | 🔄 Needs re-test |
-| Cleanup | None |
+| 目的 | 验证身份显示 |
+| 类型 | 手动 |
+| 需要 API | 否 |
+| 步骤 | `/whoami` |
+| 预期结果 | 显示 user_id、session_id、db_path |
+| 实际结果 | ✅ 正确显示 |
+| 状态 | ✅ 通过 |
+
+### B-006：SQLite 跨进程恢复
+| 字段 | 值 |
+|---|---|
+| 目的 | 验证不同 Python 进程读取同一数据库 |
+| 类型 | 手动 |
+| 需要 API | 否 |
+| 状态 | ✅ 由 test_sqlite_session.py 覆盖 |
 
 ---
 
-## D. Natural Language Routing
+## C. 文档动态扫描
 
-### D-001: search_docs from description
-| Field | Value |
+### C-001：动态检测新文件
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify route to search_docs for "find JavaScript doc" |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | knowledge_docs contains JavaScript-related files |
-| User input | `我记得本地有一份介绍 JavaScript 的资料，你帮我找到它` |
-| Expected tool chain | search_docs |
-| Expected result | Returns matching documents |
-| Actual result | ✅ search_docs called, found JavaScript docs |
-| Status | ✅ Passed |
-| Cleanup | None |
+| 目的 | 验证 list_docs 无需重启即可检测新创建的文件 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | CLI 运行中，knowledge_docs 存在 |
+| 步骤 | 启动前创建 `唯一测试文档.md`，然后询问`请列出所有本地文档` |
+| 预期工具链 | list_docs |
+| 预期结果 | 新文件出现在列表中 |
+| 实际结果 | ✅ list_docs 返回正确列表 |
+| 状态 | ✅ 通过 |
+| 清理 | 删除临时文件 |
 
-### D-002: read_docs after search_docs
-| Field | Value |
+### C-002：读取新创建的动态文件
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify reading a previously found document |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | Search_docs returned candidates |
-| User input | `把刚才找到的文档读一下` |
-| Expected tool chain | read_docs |
-| Expected result | Document content displayed |
-| Actual result | ✅ Document read successfully |
-| Status | ✅ Passed |
-| Cleanup | None |
+| 目的 | 验证 read_docs 能读取动态添加的文件 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | `__agent_dynamic_demo__.md` 存在且包含已知内容 |
+| 用户输入 | `读取 __agent_dynamic_demo__.md` |
+| 预期工具链 | read_docs |
+| 预期结果 | 内容正确显示 |
+| 实际结果 | ✅ 内容读取成功 |
+| 状态 | ✅ 通过 |
+| 清理 | 删除临时文件 |
 
-### D-003: Single-turn search → read → summarize
-| Field | Value |
+### C-003：在动态内容中 search_docs
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify full chain: search_docs → read_docs → final answer |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | knowledge_docs has JavaScript doc |
-| User input | `在本地知识库中找到介绍 JavaScript 的文档，读取后总结三个重点` |
-| Expected tool chain | search_docs → read_docs |
-| Expected result | Summary of three key points |
-| Actual result | ✅ Chain completed, three points summarized |
-| Status | ✅ Passed |
-| Cleanup | None |
+| 目的 | 验证 search_docs 在动态文件中找到内容 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | 动态文件包含关键词"蓝色鲸鱼2468" |
+| 用户输入 | `搜索蓝色鲸鱼2468` |
+| 预期工具链 | search_docs |
+| 预期结果 | 找到动态文件 |
+| 实际结果 | ✅ 搜索找到了关键词 |
+| 状态 | ✅ 通过 |
+| 清理 | 无 |
 
-### D-004: Local search vs public search distinction
-| Field | Value |
+### C-004：动态删除检测
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify local docs search uses search_docs, not search |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | knowledge_docs has local files |
-| User input | `在本地知识库搜索"Agent Runtime"` |
-| Expected tool chain | search_docs (not search) |
-| Expected result | search_docs called, no forbidden_tools search |
-| Actual result | ✅ search_docs used correctly |
-| Status | ✅ Passed |
-| Cleanup | None |
+| 目的 | 验证 list_docs 无需重启即可反映文件删除 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 步骤 | 1. 创建`临时新增测试.md`；2. list_docs 显示 5 个文件；3. 删除文件；4. 询问"目前本地知识库有哪些文档？" |
+| 预期工具链 | list_docs（必须重新调用，不使用历史记录） |
+| 预期结果 | 第二次列表显示 4 个文件 |
+| 实际结果 | ❌ Agent 使用了缓存的历史记录，显示 5 而非 4。仅在用户追问"你确定吗"后重新调用。**发现缺陷 #1。** |
+| 状态 | ❌ **缺陷 #1 — 见修复** |
+| 清理 | 确保临时文件已删除 |
+
+### C-005：动态删除 — 修复后重新测试
+| 字段 | 值 |
+|---|---|
+| 目的 | 验证询问当前状态时重新调用 list_docs |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | 已应用新鲜度规则修复 |
+| 状态 | 🔄 需要重新测试 |
+| 清理 | 无 |
 
 ---
 
-## E. Fuzzy Matching
+## D. 自然语言路由
 
-### E-001: Exact Chinese filename
-| Field | Value |
+### D-001：通过描述进行 search_docs
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify exact Chinese filename read |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | File `唯一测试文档.md` exists |
-| User input | `读取 唯一测试文档.md` |
-| Expected tool chain | read_docs |
-| Expected result | File content returned |
-| Actual result | ✅ Correct content returned |
-| Status | ✅ Passed |
-| Cleanup | None |
+| 目的 | 验证"查找 JavaScript 文档"路由到 search_docs |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | knowledge_docs 包含 JavaScript 相关文件 |
+| 用户输入 | `我记得本地有一份介绍 JavaScript 的资料，你帮我找到它` |
+| 预期工具链 | search_docs |
+| 预期结果 | 返回匹配的文档 |
+| 实际结果 | ✅ search_docs 被调用，找到 JavaScript 文档 |
+| 状态 | ✅ 通过 |
+| 清理 | 无 |
 
-### E-002: Auto-append .md
-| Field | Value |
+### D-002：search_docs 后读取文档
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify .md extension auto-append |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | File `readme.md` exists |
-| User input | `读取 readme` |
-| Expected tool chain | read_docs |
-| Expected result | Content of readme.md |
-| Actual result | ✅ Auto-appended .md, read correctly |
-| Status | ✅ Passed |
-| Cleanup | None |
+| 目的 | 验证读取之前找到的文档 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | search_docs 返回了候选文档 |
+| 用户输入 | `把刚才找到的文档读一下` |
+| 预期工具链 | read_docs |
+| 预期结果 | 文档内容显示 |
+| 实际结果 | ✅ 文档读取成功 |
+| 状态 | ✅ 通过 |
+| 清理 | 无 |
 
-### E-003: Single fuzzy candidate
-| Field | Value |
+### D-003：单轮搜索 → 读取 → 总结
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify unique fuzzy match succeeds |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | File `HiveServer2-排障总结.md` or similar unique name |
-| Status | ✅ Covered by test_docs_tools.py |
-| Cleanup | None |
+| 目的 | 验证完整链：search_docs → read_docs → 最终回答 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | knowledge_docs 有 JavaScript 文档 |
+| 用户输入 | `在本地知识库中找到介绍 JavaScript 的文档，读取后总结三个重点` |
+| 预期工具链 | search_docs → read_docs |
+| 预期结果 | 三个要点的总结 |
+| 实际结果 | ✅ 链式调用完成，三个要点已总结 |
+| 状态 | ✅ 通过 |
+| 清理 | 无 |
 
-### E-004: Two similar candidates
-| Field | Value |
+### D-004：本地搜索与公共搜索的区别
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify ambiguity returns both candidates for user to choose |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | Both `JavaScript介绍基础.md` and `JavaScript介绍进阶.md` exist |
-| User input | `读取 JavaScript介绍.md` |
-| Expected tool chain | read_docs |
-| Expected result | Returns ambiguous result with both candidates |
-| Actual result | ❌ In old Session, model substituted with historical `介绍.md`. **Defect #2 identified.** |
-| Status | ❌ **Defect #2 — SEE FIX** |
-| Cleanup | None |
-
-### E-005: Ambiguity re-test after fix
-| Field | Value |
-|---|---|
-| Purpose | Verify new Session correctly returns both candidates |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | Fix applied; fresh session |
-| Status | 🔄 Needs re-test |
-| Cleanup | None |
-
-### E-006: Old session must not substitute filenames
-| Field | Value |
-|---|---|
-| Purpose | Verify old Session doesn't replace user's filename with historical one |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | Old session previously read `介绍.md`; disk now has `JavaScript介绍基础.md`, `JavaScript介绍进阶.md` |
-| User input | `读取 JavaScript介绍.md` |
-| Expected tool chain | read_docs (with `JavaScript介绍.md` as filename) |
-| Expected result | Must pass `JavaScript介绍.md` to read_docs, not substitute |
-| Actual result | ❌ Old session substituted with historical `介绍.md`. **Defect #2** |
-| Status | ❌ **Defect #2 — SEE FIX** |
-| Cleanup | None |
+| 目的 | 验证本地文档搜索使用 search_docs，而非 search |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | knowledge_docs 有本地文件 |
+| 用户输入 | `在本地知识库搜索"Agent Runtime"` |
+| 预期工具链 | search_docs（不是 search） |
+| 预期结果 | search_docs 被调用，无 forbidden_tools search |
+| 实际结果 | ✅ 正确使用了 search_docs |
+| 状态 | ✅ 通过 |
+| 清理 | 无 |
 
 ---
 
-## F. Memory & Dynamic State
+## E. 模糊匹配
 
-### F-001: Old session recalls past document
-| Field | Value |
+### E-001：精确中文文件名
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify session memory retains document read history |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | Session previously read `readme.md` |
-| User input | `我之前读了哪个文档？` |
-| Expected result | Agent recalls readme.md from memory |
-| Actual result | ✅ Agent recalled correctly |
-| Status | ✅ Passed |
-| Cleanup | None |
+| 目的 | 验证精确中文文件名读取 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | 文件`唯一测试文档.md`存在 |
+| 用户输入 | `读取 唯一测试文档.md` |
+| 预期工具链 | read_docs |
+| 预期结果 | 文件内容返回 |
+| 实际结果 | ✅ 正确内容返回 |
+| 状态 | ✅ 通过 |
+| 清理 | 无 |
 
-### F-002: Fresh session has no cross-session history
-| Field | Value |
+### E-002：自动追加 .md
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify `/new` clears conversation context |
-| Type | Manual — CLI |
-| API required | Yes |
-| Steps | `/new` → `我之前读了哪个文档？` |
-| Expected result | Fresh session has no memory |
-| Actual result | ✅ Correct — no history in new session |
-| Status | ✅ Passed |
-| Cleanup | None |
+| 目的 | 验证 .md 扩展名自动追加 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | 文件`readme.md`存在 |
+| 用户输入 | `读取 readme` |
+| 预期工具链 | read_docs |
+| 预期结果 | readme.md 的内容 |
+| 实际结果 | ✅ 自动追加了 .md，正确读取 |
+| 状态 | ✅ 通过 |
+| 清理 | 无 |
 
-### F-003: Current document listing must re-call list_docs
-| Field | Value |
+### E-003：单个模糊候选项
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify freshness rule — asking "current" list must re-call |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | Just called list_docs in previous turn; file deleted |
-| User input | `现在本地知识库有哪些文档？` |
-| Expected tool chain | list_docs (must re-call) |
-| Expected result | Current disk state returned |
-| Actual result | ❌ Did not re-call. **Defect #1** |
-| Status | ❌ **Defect #1 — SEE FIX** |
-| Cleanup | None |
+| 目的 | 验证唯一模糊匹配成功 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | 文件`HiveServer2-排障总结.md`或类似的唯一名称 |
+| 状态 | ✅ 由 test_docs_tools.py 覆盖 |
+| 清理 | 无 |
 
-### F-004: Tool results override session memory
-| Field | Value |
+### E-004：两个相似候选项
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify current tool results take precedence over historical memory |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | Session memory says file exists; file actually deleted |
-| Steps | Call list_docs (which now shows file missing) |
-| Expected result | Agent reports current state, not memory |
-| Status | ✅ Covered by rule #13 |
-| Cleanup | None |
+| 目的 | 验证歧义时返回两个候选项供用户选择 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | 同时存在`JavaScript介绍基础.md`和`JavaScript介绍进阶.md` |
+| 用户输入 | `读取 JavaScript介绍.md` |
+| 预期工具链 | read_docs |
+| 预期结果 | 返回包含两个候选项的歧义结果 |
+| 实际结果 | ❌ 在旧会话中，模型替换为历史上的`介绍.md`。**发现缺陷 #2。** |
+| 状态 | ❌ **缺陷 #2 — 见修复** |
+| 清理 | 无 |
+
+### E-005：歧义修复后重新测试
+| 字段 | 值 |
+|---|---|
+| 目的 | 验证新会话正确返回两个候选项 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | 已应用修复；新会话 |
+| 状态 | 🔄 需要重新测试 |
+| 清理 | 无 |
+
+### E-006：旧会话不得替换文件名
+| 字段 | 值 |
+|---|---|
+| 目的 | 验证旧会话不将用户的文件名替换为历史上的文件名 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | 旧会话之前读取了`介绍.md`；磁盘上现有`JavaScript介绍基础.md`、`JavaScript介绍进阶.md` |
+| 用户输入 | `读取 JavaScript介绍.md` |
+| 预期工具链 | read_docs（使用`JavaScript介绍.md`作为文件名） |
+| 预期结果 | 必须传递`JavaScript介绍.md`给 read_docs，不替换 |
+| 实际结果 | ❌ 旧会话替换为历史上的`介绍.md`。**缺陷 #2** |
+| 状态 | ❌ **缺陷 #2 — 见修复** |
+| 清理 | 无 |
 
 ---
 
-## G. Security
+## F. 内存与动态状态
 
-### G-001: Path traversal
-| Field | Value |
+### F-001：旧会话回忆过去的文档
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify path traversal blocked |
-| Type | Automated |
-| API required | No |
-| Status | ✅ Covered by test_docs_tools.py |
-| Cleanup | None |
+| 目的 | 验证会话内存保留文档阅读历史 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | 会话之前读取了`readme.md` |
+| 用户输入 | `我之前读了哪个文档？` |
+| 预期结果 | Agent 从记忆中回忆起 readme.md |
+| 实际结果 | ✅ Agent 正确回想 |
+| 状态 | ✅ 通过 |
+| 清理 | 无 |
 
-### G-002: Non-Markdown
-| Field | Value |
+### F-002：新会话无跨会话历史
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify non-.md files rejected |
-| Type | Automated |
-| API required | No |
-| Status | ✅ Covered by test_docs_tools.py |
+| 目的 | 验证 `/new` 清空对话上下文 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 步骤 | `/new` → `我之前读了哪个文档？` |
+| 预期结果 | 新会话无记忆 |
+| 实际结果 | ✅ 正确 —— 新会话无历史 |
+| 状态 | ✅ 通过 |
+| 清理 | 无 |
 
-### G-003: Prompt injection in document
-| Field | Value |
+### F-003：当前文档列表必须重新调用 list_docs
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify document content with injection attempt is read as data, not executed |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | knowledge_docs has document containing injected instructions |
-| User input | `请读取提示注入测试文档.md` |
-| Expected result | Tool reads content; model should not follow injected instructions |
-| Actual result | ⏳ Not yet executed |
-| Status | ⏳ Not executed |
-| Cleanup | None |
+| 目的 | 验证新鲜度规则 —— 询问"当前"列表必须重新调用 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | 上一轮刚调用过 list_docs；文件已删除 |
+| 用户输入 | `现在本地知识库有哪些文档？` |
+| 预期工具链 | list_docs（必须重新调用） |
+| 预期结果 | 返回当前磁盘状态 |
+| 实际结果 | ❌ 没有重新调用。**缺陷 #1** |
+| 状态 | ❌ **缺陷 #1 — 见修复** |
+| 清理 | 无 |
 
-### G-004: API key not in trace
-| Field | Value |
+### F-004：工具结果覆盖会话内存
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify sensitive key not exposed in trace/logs |
-| Type | Automated |
-| API required | No |
-| Status | ✅ Covered by test_agent.py |
-
-### G-005: Read only knowledge_docs
-| Field | Value |
-|---|---|
-| Purpose | Verify tool cannot escape docs directory |
-| Type | Automated |
-| API required | No |
-| Status | ✅ Covered by test_docs_tools.py |
+| 目的 | 验证当前工具结果优先于历史记忆 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | 会话内存说文件存在；文件实际上已被删除 |
+| 步骤 | 调用 list_docs（现在显示文件缺失） |
+| 预期结果 | Agent 报告当前状态，而非记忆 |
+| 状态 | ✅ 由规则 #13 覆盖 |
+| 清理 | 无 |
 
 ---
 
-## H. Long Documents
+## G. 安全
 
-### H-001: 115 KB document read
-| Field | Value |
+### G-001：路径遍历
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify large document read with truncation metadata |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | Large file `smart-cultural-platform-interview-learning-guide-v2.md` (~115 KB, ~2500 lines) |
-| User input | `读取 smart-cultural-platform-interview-learning-guide-v2.md` |
-| Expected tool chain | read_docs |
-| Expected result | Content returned with truncated=true |
-| Actual result | ❌ Document was read but agent did not disclose truncation. **Defect #4 identified.** |
-| Status | ❌ **Defect #4 — SEE FIX** |
-| Cleanup | None |
+| 目的 | 验证路径遍历被阻止 |
+| 类型 | 自动化 |
+| 需要 API | 否 |
+| 状态 | ✅ 由 test_docs_tools.py 覆盖 |
+| 清理 | 无 |
 
-### H-002: Truncation metadata
-| Field | Value |
+### G-002：非 Markdown 文件
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify original_chars > returned_chars when truncated |
-| Type | Automated |
-| API required | No |
-| Status | ✅ New test added |
-| Cleanup | None |
+| 目的 | 验证非 .md 文件被拒绝 |
+| 类型 | 自动化 |
+| 需要 API | 否 |
+| 状态 | ✅ 由 test_docs_tools.py 覆盖 |
 
-### H-003: Truncation disclosure in answer
-| Field | Value |
+### G-003：文档中的提示注入
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify agent explicitly mentions truncation when truncated=true |
-| Type | Manual — CLI |
-| API required | Yes |
-| Precondition | Long document exists |
-| User input | `读取大型文档.md` |
-| Expected result | Answer must state "only part of the document was read" |
-| Status | 🔄 Needs re-test after prompt fix |
+| 目的 | 验证包含注入尝试的文档内容作为数据读取，不执行 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | knowledge_docs 包含注入指令的文档 |
+| 用户输入 | `请读取提示注入测试文档.md` |
+| 预期结果 | 工具读取内容；模型不应遵循注入指令 |
+| 实际结果 | ⏳ 尚未执行 |
+| 状态 | ⏳ 未执行 |
+| 清理 | 无 |
 
-### H-004: search_docs finds content beyond truncation point
-| Field | Value |
+### G-004：API 密钥不在追踪中
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify search_docs scans full file, not truncated content |
-| Type | Automated |
-| API required | No |
-| Status | ✅ New test added |
+| 目的 | 验证敏感密钥未在追踪/日志中暴露 |
+| 类型 | 自动化 |
+| 需要 API | 否 |
+| 状态 | ✅ 由 test_agent.py 覆盖 |
 
-### H-005: Document end identifier after truncation
-| Field | Value |
+### G-005：只读取 knowledge_docs
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify "银色狮子8642" not present in truncated read_docs result, but searchable by search_docs |
-| Type | Automated |
-| API required | No |
-| Status | ✅ New test added |
+| 目的 | 验证工具不能逃脱文档目录 |
+| 类型 | 自动化 |
+| 需要 API | 否 |
+| 状态 | ✅ 由 test_docs_tools.py 覆盖 |
 
 ---
 
-## I. Context
+## H. 长文档
 
-### I-001: /memory command
-| Field | Value |
+### H-001：115 KB 文档读取
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify session memory display |
-| Type | Manual — CLI |
-| API required | No |
-| Steps | `/memory` |
-| Expected result | Shows message count, summary length, todo count |
-| Actual result | ✅ Displayed correctly |
-| Status | ✅ Passed |
+| 目的 | 验证大文档读取并带截断元数据 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | 大文件`smart-cultural-platform-interview-learning-guide-v2.md`（约 115 KB，约 2500 行） |
+| 用户输入 | `读取 smart-cultural-platform-interview-learning-guide-v2.md` |
+| 预期工具链 | read_docs |
+| 预期结果 | 返回内容，truncated=true |
+| 实际结果 | ❌ 文档被读取但 Agent 未告知截断。**发现缺陷 #4。** |
+| 状态 | ❌ **缺陷 #4 — 见修复** |
+| 清理 | 无 |
 
-### I-002: Deterministic compression demo
-| Field | Value |
+### H-002：截断元数据
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify context compression without API |
-| Type | Automated script |
-| API required | No |
-| Steps | `python scripts/demo_context_compression.py` |
-| Expected result | Runs without error |
-| Actual result | ✅ Runs successfully |
-| Status | ✅ Passed |
+| 目的 | 验证截断时 original_chars > returned_chars |
+| 类型 | 自动化 |
+| 需要 API | 否 |
+| 状态 | ✅ 已添加新测试 |
+| 清理 | 无 |
 
-### I-003: Summary injection
-| Field | Value |
+### H-003：回答中告知截断
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify summary is injected into LLM messages |
-| Type | Automated |
-| API required | No |
-| Status | ✅ Covered by test_context_manager.py |
+| 目的 | 验证 truncated=true 时 Agent 明确提及截断 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 前置条件 | 存在长文档 |
+| 用户输入 | `读取大型文档.md` |
+| 预期结果 | 回答必须说明"仅读取了文档的部分内容" |
+| 状态 | 🔄 提示修复后需要重新测试 |
 
-### I-004: Recent turns preserved
-| Field | Value |
+### H-004：search_docs 找到截断点后的内容
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify recent full turns kept after compression |
-| Type | Automated |
-| API required | No |
-| Status | ✅ Covered by test_context_manager.py |
+| 目的 | 验证 search_docs 扫描完整文件，而非截断内容 |
+| 类型 | 自动化 |
+| 需要 API | 否 |
+| 状态 | ✅ 已添加新测试 |
 
-### I-005: Tool call + result not split
-| Field | Value |
+### H-005：截断后的文档结束标识
+| 字段 | 值 |
 |---|---|
-| Purpose | Verify tool_call + tool_result pairs stay together |
-| Type | Automated |
-| API required | No |
-| Status | ✅ Covered by test_context_manager.py |
-
-### I-006: Semantic recall after compression
-| Field | Value |
-|---|---|
-| Purpose | Verify real LLM can still answer based on compressed summary |
-| Type | Manual — CLI |
-| API required | Yes |
-| Status | ❓ Under discussion — deferred to next phase |
+| 目的 | 验证"银色狮子8642"不在截断的 read_docs 结果中，但可被 search_docs 搜索到 |
+| 类型 | 自动化 |
+| 需要 API | 否 |
+| 状态 | ✅ 已添加新测试 |
 
 ---
 
-## Summary
+## I. 上下文
 
-| Group | Total | ✅ Passed | ❌ Failed (defect) | 🔄 Needs re-test | ⏳ Not executed | ❓ Discussion |
+### I-001：/memory 命令
+| 字段 | 值 |
+|---|---|
+| 目的 | 验证会话内存显示 |
+| 类型 | 手动 — CLI |
+| 需要 API | 否 |
+| 步骤 | `/memory` |
+| 预期结果 | 显示消息数、摘要长度、待办数 |
+| 实际结果 | ✅ 正确显示 |
+| 状态 | ✅ 通过 |
+
+### I-002：确定性压缩演示
+| 字段 | 值 |
+|---|---|
+| 目的 | 验证无需 API 的上下文压缩 |
+| 类型 | 自动化脚本 |
+| 需要 API | 否 |
+| 步骤 | `python scripts/demo_context_compression.py` |
+| 预期结果 | 无错误运行 |
+| 实际结果 | ✅ 运行成功 |
+| 状态 | ✅ 通过 |
+
+### I-003：摘要注入
+| 字段 | 值 |
+|---|---|
+| 目的 | 验证摘要被注入 LLM 消息 |
+| 类型 | 自动化 |
+| 需要 API | 否 |
+| 状态 | ✅ 由 test_context_manager.py 覆盖 |
+
+### I-004：最近轮次保留
+| 字段 | 值 |
+|---|---|
+| 目的 | 验证压缩后保留最近的完整轮次 |
+| 类型 | 自动化 |
+| 需要 API | 否 |
+| 状态 | ✅ 由 test_context_manager.py 覆盖 |
+
+### I-005：工具调用 + 结果不分隔
+| 字段 | 值 |
+|---|---|
+| 目的 | 验证 tool_call + tool_result 配对保持在一起 |
+| 类型 | 自动化 |
+| 需要 API | 否 |
+| 状态 | ✅ 由 test_context_manager.py 覆盖 |
+
+### I-006：压缩后语义召回
+| 字段 | 值 |
+|---|---|
+| 目的 | 验证真实 LLM 仍能基于压缩摘要回答 |
+| 类型 | 手动 — CLI |
+| 需要 API | 是 |
+| 状态 | ❓ 讨论中 — 推迟到下一阶段 |
+
+---
+
+## 汇总
+
+| 分组 | 总数 | ✅ 通过 | ❌ 失败（缺陷） | 🔄 需要重新测试 | ⏳ 未执行 | ❓ 讨论中 |
 |---|---|---|---|---|---|---|
-| A. Basic Loop | 5 | 4 | 0 | 0 | 0 | 0 |
-| B. Session/Persistence | 6 | 5 | 0 | 0 | 0 | 0 |
-| C. Dynamic Scan | 5 | 3 | 1 | 1 | 0 | 0 |
-| D. NL Routing | 4 | 4 | 0 | 0 | 0 | 0 |
-| E. Fuzzy Matching | 6 | 2 | 1 | 2 | 0 | 0 |
-| F. Memory & State | 4 | 2 | 1 | 0 | 0 | 0 |
-| G. Security | 5 | 4 | 0 | 0 | 1 | 0 |
-| H. Long Docs | 5 | 1 | 1 | 1 | 0 | 0 |
-| I. Context | 6 | 5 | 0 | 0 | 0 | 1 |
-| **Total** | **46** | **30** | **4** | **4** | **1** | **1** |
+| A. 基本循环 | 5 | 4 | 0 | 0 | 0 | 0 |
+| B. 会话/持久化 | 6 | 5 | 0 | 0 | 0 | 0 |
+| C. 动态扫描 | 5 | 3 | 1 | 1 | 0 | 0 |
+| D. 自然语言路由 | 4 | 4 | 0 | 0 | 0 | 0 |
+| E. 模糊匹配 | 6 | 2 | 1 | 2 | 0 | 0 |
+| F. 内存与状态 | 4 | 2 | 1 | 0 | 0 | 0 |
+| G. 安全 | 5 | 4 | 0 | 0 | 1 | 0 |
+| H. 长文档 | 5 | 1 | 1 | 1 | 0 | 0 |
+| I. 上下文 | 6 | 5 | 0 | 0 | 0 | 1 |
+| **总计** | **46** | **30** | **4** | **4** | **1** | **1** |
 
-Defects identified:
-- **Defect #1**: Dynamic state not re-called (list_docs cached in history)
-- **Defect #2**: Explicit filename replaced by historical filename
-- **Defect #3**: Same no-result search repeated 3 times
-- **Defect #4**: Truncation not disclosed to user
+发现的缺陷：
+- **缺陷 #1**：动态状态未重新调用（list_docs 缓存在历史中）
+- **缺陷 #2**：显式文件名被历史文件名替换
+- **缺陷 #3**：同一无结果搜索重复 3 次
+- **缺陷 #4**：截断未告知用户
 
-All four defects addressed by System Prompt fixes and read_docs metadata enhancement.
+所有四个缺陷已通过系统提示修复和 read_docs 元数据增强解决。

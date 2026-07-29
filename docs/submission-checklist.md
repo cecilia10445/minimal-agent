@@ -1,42 +1,42 @@
-# Submission Checklist
+# 提交通知单
 
-Final quality gate for GitHub release.
+GitHub 发布的最终质量门禁。
 
-## Required (blocking — all must pass)
+## 必查项（阻塞 —— 须全部通过）
 
-| Item | Result | Notes |
+| 检查项 | 结果 | 备注 |
 |---|---|---|
-| `pytest` — all tests pass | PASS | 270 passed, 2 skipped (real LLM skip) |
-| `python -m compileall src tests scripts` | PASS | No syntax errors |
-| git diff --check | PASS | No whitespace errors |
-| No API key in source files | PASS | Checked via `scripts\check_secrets.py` |
-| No API key in git history | PASS | No commits with secrets |
-| No `.env` in commit | PASS | Listed in `.gitignore` |
-| No `data/*.db` in commit | PASS | Listed in `.gitignore` |
-| No `reports/**/*.db` in commit | PASS | Added to `.gitignore` |
-| No `__pycache__` / `.pytest_cache` | PASS | Listed in `.gitignore` |
-| README commands executable | PASS | Verified `python -m src.cli --help` |
-| Knowledge docs sanitized | PASS | Sensitive content removed; sample docs only |
-| Core requirements implemented (25/25) | PASS | See `docs/submission-audit.md` |
-| Git remote configured | PASS | `origin → https://github.com/cecilia10445/minimal-agent.git` |
-| Branch is `main` | PASS | |
+| `pytest` — 全部测试通过 | 通过 | 270 passed, 2 skipped（真实 LLM 跳过） |
+| `python -m compileall src tests scripts` | 通过 | 无语法错误 |
+| git diff --check | 通过 | 无空格错误 |
+| 源码中无 API 密钥 | 通过 | 通过 `scripts\check_secrets.py` 检查 |
+| git 历史中无 API 密钥 | 通过 | 无含密钥的提交 |
+| 未提交 `.env` | 通过 | 已在 `.gitignore` 中 |
+| 未提交 `data/*.db` | 通过 | 已在 `.gitignore` 中 |
+| 未提交 `reports/**/*.db` | 通过 | 已加入 `.gitignore` |
+| 未提交 `__pycache__` / `.pytest_cache` | 通过 | 已在 `.gitignore` 中 |
+| README 命令可执行 | 通过 | 已验证 `python -m src.cli --help` |
+| 知识文档已脱敏 | 通过 | 敏感内容已移除；仅有示例文档 |
+| 核心需求已实现（25/25） | 通过 | 见 `docs/submission-audit.md` |
+| Git 远程已配置 | 通过 | `origin → https://github.com/cecilia10445/minimal-agent.git` |
+| 分支为 `main` | 通过 | |
 
-## Non-blocking (advisory)
+## 非必查项（建议）
 
-| Item | Result | Notes |
+| 检查项 | 结果 | 备注 |
 |---|---|---|
-| Real LLM re-run completed | FAIL | DashScope free quota exhausted — code fixes verified, re-run requires quota top-up |
-| Context comparison generated | FAIL | Requires fresh runs (quota exhaustion) — see `reports/context-comparison.md` placeholder |
-| Semantic probes 10/10 | FAIL | 8/10 from real Hybrid run (2 scorer false negatives fixed) |
-| Context baseline metrics accurate | FAIL | Old reports have buggy event counting — code fixed, re-run needed |
-| Recording script verified | MANUAL | Follow `docs/recording-script.md` — requires API key |
-| .env.example complete | PASS | All env vars documented |
+| 真实 LLM 重新运行完成 | 失败 | DashScope 免费配额耗尽 —— 代码修复已验证，重新运行需充值配额 |
+| 上下文对比报告已生成 | 失败 | 需要重新运行（配额耗尽）—— 见 `reports/context-comparison.md` 占位文件 |
+| 语义探针 10/10 | 失败 | 真实混合模式运行 8/10（2 个评分器假阴性已修复） |
+| 上下文基线指标准确 | 失败 | 旧报告的事件计数有缺陷 —— 代码已修复，需要重新运行 |
+| 录制脚本已验证 | 手动 | 按 `docs/recording-script.md` 操作 —— 需要 API 密钥 |
+| .env.example 完整 | 通过 | 所有环境变量已记录 |
 
-## Final Decision
+## 最终决定
 
-**All blocking items PASS. Ready to push.**
+**所有必查项通过。准备推送。**
 
-Non-blocking failures are documented:
-1. API quota exhaustion prevents fresh context baselines
-2. Old report metrics are preserved but known to have calculation bugs (fixed in current code)
-3. README accurately reflects these limitations
+非必查项的失败已记录：
+1. API 配额耗尽无法重新运行上下文基线
+2. 旧报告指标已保留但存在计算缺陷（当前代码已修复）
+3. README 已如实反映这些限制

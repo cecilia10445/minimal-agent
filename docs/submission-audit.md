@@ -1,6 +1,6 @@
-# Submission Audit
+# 提交审计
 
-Task-by-task verification against the original project requirements.
+对照原始项目需求逐任务验证。
 
 | # | Requirement | Implementation | Source | Tests | Demo | Status |
 |---|---|---|---|---|---|---|
@@ -30,8 +30,8 @@ Task-by-task verification against the original project requirements.
 | 24 | 录屏脚本 | `scenarios/recording-demo.txt` + `docs/recording-script.md` with step-by-step instructions | `scenarios/recording-demo.txt`, `docs/recording-script.md` | N/A | Follow `recording-script.md` for 5-8 min demo | PASS |
 | 25 | AI Prompt 与问题解决记录 | `docs/ai-development-log.md` — all rounds, prompts, issues, fixes, fake vs real distinction | `docs/ai-development-log.md` | N/A | Contains Round 1-11 entries | PASS |
 
-## Notes
+## 备注
 
-- **Real LLM quota**: The DashScope free-tier quota was exhausted during final validation. The code is verified with real qwen3.6-plus from earlier runs (Round 8 verification, previous context baselines). All automated tests pass without API dependency.
-- **Context baseline metrics**: The buggy report data from earlier runs is preserved as-is in `reports/context-deterministic/` and `reports/context-hybrid/`. The metrics calculation code has been fixed for future runs, but fresh reports could not be generated due to quota exhaustion.
-- **Probe scorers**: Probe 2 (deadline) scorer fixed — removed redundant `"10"` keyword that caused false negatives. Probe 9 (todo) scorer fixed — corrected `"READ ME"` → `"README"` keyword. Both fixes address scorer false negatives, not model correctness.
+- **真实 LLM 配额**：DashScope 免费配额在最终验证时已耗尽。代码已通过早期运行（第 8 轮验证、之前的上下文基线）使用真实的 qwen3.6-plus 验证。所有自动化测试无需 API 依赖即可通过。
+- **上下文基线指标**：早期运行的有缺陷的报告数据原样保留在 `reports/context-deterministic/` 和 `reports/context-hybrid/` 中。指标计算代码已修复，但因配额耗尽无法生成新报告。
+- **探针评分器**：探针 2（截止时间）评分器已修复 —— 移除了导致假阴性的冗余 `"10"` 关键词。探针 9（待办）评分器已修复 —— 将 `"READ ME"` 修正为 `"README"` 关键词。两项修复均针对评分器假阴性，而非模型正确性。

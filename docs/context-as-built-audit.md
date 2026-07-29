@@ -1,12 +1,12 @@
-# Context-as-Built Audit
+# 上下文实际构建审计
 
-Source-level audit of `minimal_agent` Context management based on current source code (Round 8, 189 tests passing).
+基于当前源代码（第 8 轮，189 个测试通过）对 `minimal_agent` 上下文管理的源码级审计。
 
 ---
 
-## 1. Classes and Responsibilities
+## 1. 类与职责
 
-### `Session` (src/session.py:8-15)
+### `Session`（src/session.py:8-15）
 
 ```python
 @dataclass
@@ -19,45 +19,45 @@ class Session:
     traces: list[dict[str, Any]]
 ```
 
-| Field | Type | Purpose |
+| 字段 | 类型 | 用途 |
 |---|---|---|
-| `user_id` | `str` | Logical user identifier |
-| `session_id` | `str` | Session identifier within user |
-| `messages` | `list[dict[str, str]]` | Ordered conversation history (role, content, tool_calls, etc.) |
-| `summary` | `str` | Deterministic text summary of compressed messages |
-| `todos` | `list[dict[str, Any]]` | Todo items (not sent to LLM context) |
-| `traces` | `list[dict[str, Any]]` | Step-by-step execution traces (not sent to LLM context) |
+| `user_id` | `str` | 逻辑用户标识 |
+| `session_id` | `str` | 用户内的会话标识 |
+| `messages` | `list[dict[str, str]]` | 有序对话历史（role, content, tool_calls 等） |
+| `summary` | `str` | 已压缩消息的确定性文本摘要 |
+| `todos` | `list[dict[str, Any]]` | 待办事项（不发送给 LLM 上下文） |
+| `traces` | `list[dict[str, Any]]` | 逐步执行追踪（不发送给 LLM 上下文） |
 
-Note: The type annotation `list[dict[str, str]]` on `messages` is overly restrictive — at runtime it contains `dict[str, Any]` including `tool_calls` (list), `tool_call_id` (str), `name` (str), etc.
+注意：`messages` 上的 `list[dict[str, str]]` 类型标注过于严格——运行时它包含 `dict[str, Any]`，包括 `tool_calls`（list）、`tool_call_id`（str）、`name`（str）等。
 
-### `SessionStore` (src/session.py:18-38)
+### `SessionStore`（src/session.py:18-38）
 
-In-memory dict-based store. Keyed by `(user_id, session_id)` tuple.
+基于内存字典的存储。键为 `(user_id, session_id)` 元组。
 
-| Method | Behavior |
+| 方法 | 行为 |
 |---|---|
-| `get_or_create(key)` | Returns existing or creates new `Session` |
-| `get(key)` | Returns `Session` or `None` |
-| `list_user_sessions(uid)` | Lists all sessions for a user |
-| `save(session)` | Upserts into dict |
-| `clear()` | Empties all sessions |
+| `get_or_create(key)` | 返回已有或创建新的 `Session` |
+| `get(key)` | 返回 `Session` 或 `None` |
+| `list_user_sessions(uid)` | 列出用户的所有会话 |
+| `save(session)` | 插入或更新字典 |
+| `clear()` | 清空所有会话 |
 
-### `SQLiteSessionStore` (src/sqlite_session.py:88-190)
+### `SQLiteSessionStore`（src/sqlite_session.py:88-190）
 
-SQLite-backed store with in-memory cache for object identity.
+基于 SQLite 的存储，带内存缓存以实现对象标识一致性。
 
-| Aspect | Detail |
+| 方面 | 详情 |
 |---|---|
-| Table | `sessions(user_id TEXT, session_id TEXT, state_json TEXT, created_at TEXT, updated_at TEXT)` |
-| PK | `(user_id, session_id)` composite |
-| Serialization | `_serialize()` writes `messages`, `summary`, `todos`, `traces` as JSON |
-| Deserialization | `_deserialize()` validates all 4 keys exist |
-| Cache | `_cache: dict[tuple[str, str], Session]` — same Python object returned per process |
+| 表 | `sessions(user_id TEXT, session_id TEXT, state_json TEXT, created_at TEXT, updated_at TEXT)` |
+| 主键 | `(user_id, session_id)` 联合主键 |
+| 序列化 | `_serialize()` 将 `messages`、`summary`、`todos`、`traces` 写为 JSON |
+| 反序列化 | `_deserialize()` 验证全部 4 个键存在 |
+| 缓存 | `_cache: dict[tuple[str, str], Session]` —— 每进程返回相同的 Python 对象 |
 | Upsert | `INSERT ... ON CONFLICT DO UPDATE SET state_json, updated_at` |
 
-`save()` is called at 8 points in `agent.py` (before/after every modification to session.messages, session.traces).
+`save()` 在 `agent.py` 的 8 个位置被调用（每次修改 session.messages、session.traces 前后）。
 
-### `ContextPolicy` (src/context_manager.py:10-15)
+### `ContextPolicy`（src/context_manager.py:10-15）
 
 ```python
 @dataclass(frozen=True)
@@ -68,45 +68,45 @@ class ContextPolicy:
     max_item_chars: int = 300
 ```
 
-Configurable via `src/config.py:load_context_policy()` from env vars:
+可通过 `src/config.py:load_context_policy()` 从环境变量配置：
 - `AGENT_CONTEXT_MAX_TOKENS` → `max_estimated_tokens`
 - `AGENT_CONTEXT_KEEP_RECENT_TURNS` → `keep_recent_user_turns`
 - `AGENT_CONTEXT_MAX_SUMMARY_CHARS` → `max_summary_chars`
 - `AGENT_CONTEXT_MAX_ITEM_CHARS` → `max_item_chars`
 
-### `ContextManager` (src/context_manager.py:105-153)
+### `ContextManager`（src/context_manager.py:105-153）
 
-Two public methods:
+两个公开方法：
 
-| Method | Location | Purpose |
+| 方法 | 位置 | 用途 |
 |---|---|---|
-| `prepare_session(session)` | Line 109-130 | Conditional compression: truncates old messages into summary |
-| `build_messages(system_prompt, session)` | Line 132-153 | Assembles final message list for LLM |
+| `prepare_session(session)` | 第 109-130 行 | 条件压缩：将旧消息截断为摘要 |
+| `build_messages(system_prompt, session)` | 第 132-153 行 | 组装发送给 LLM 的最终消息列表 |
 
-### `AgentRuntime` (src/agent.py:42-247)
+### `AgentRuntime`（src/agent.py:42-247）
 
-The main orchestrator. Key context-related operations:
+主要编排器。关键上下文相关操作：
 
-| Operation | Location | Detail |
+| 操作 | 位置 | 详情 |
 |---|---|---|
-| `prepare_session()` call | Line 84 | Before appending user message |
-| User message append | Line 86 | After compression |
-| `build_messages()` call | Line 91 | Inside step loop, before every LLM call |
-| Tool call append | Line 194 | assistant msg with tool_calls |
-| Tool result append | Line 239-246 | tool msg per tool call |
-| Assistant answer append | Line 110-112 | final assistant content msg |
-| `_save_session()` calls | Lines 85, 87, 113, 123, 132, 143, 149, 159, 165, 168, 195, 247 | After every mutation |
+| `prepare_session()` 调用 | 第 84 行 | 在追加用户消息之前 |
+| 用户消息追加 | 第 86 行 | 压缩之后 |
+| `build_messages()` 调用 | 第 91 行 | 步骤循环内，每次 LLM 调用之前 |
+| 工具调用追加 | 第 194 行 | 带 tool_calls 的 assistant 消息 |
+| 工具结果追加 | 第 239-246 行 | 每个工具调用一条 tool 消息 |
+| 助手回答追加 | 第 110-112 行 | 最终 assistant 内容消息 |
+| `_save_session()` 调用 | 第 85, 87, 113, 123, 132, 143, 149, 159, 165, 168, 195, 247 行 | 每次修改后 |
 
-### `LLMClient` Protocol (src/llm.py:21-29)
+### `LLMClient` 协议（src/llm.py:21-29）
 
 ```python
 class LLMClient(Protocol):
     def complete(self, *, messages: list[dict], tools: list[dict]) -> LLMResponse: ...
 ```
 
-Implementations: `ScriptedLLMClient` (test double, `src/llm.py:32-58`), `OpenAICompatibleLLMClient` (real, `src/qwen_client.py`).
+实现：`ScriptedLLMClient`（测试替身，`src/llm.py:32-58`）、`OpenAICompatibleLLMClient`（真实，`src/qwen_client.py`）。
 
-### `TraceStep` (src/trace.py:7-19)
+### `TraceStep`（src/trace.py:7-19）
 
 ```python
 @dataclass
@@ -126,27 +126,27 @@ class TraceStep:
 
 ---
 
-## 2. Complete Data Flow
+## 2. 完整数据流
 
-### Flow diagram with source locations
+### 带源码位置的流程图
 
 ```
-User Input
+用户输入
     │
     ▼
 1. session = store.get_or_create(user_id, session_id)
    └─ src/agent.py:79
-   └─ src/sqlite_session.py:112 (or src/session.py:22)
+   └─ src/sqlite_session.py:112（或 src/session.py:22）
     │
     ▼
 2. context_manager.prepare_session(session)
    └─ src/agent.py:84
    └─ src/context_manager.py:109
-   │  ├─ estimate_tokens(session.messages) → False if < threshold
-   │  ├─ find_compress_boundary() → 0 if not enough turns
+   │  ├─ estimate_tokens(session.messages) → 低于阈值则 False
+   │  ├─ find_compress_boundary() → 轮次不足则 0
    │  ├─ slice messages[:boundary] → to_compress
-   │  ├─ summarize_messages(to_compress) → entries list
-   │  ├─ merge_summary(existing, entries) → new summary string
+   │  ├─ summarize_messages(to_compress) → entries 列表
+   │  ├─ merge_summary(existing, entries) → 新摘要字符串
    │  ├─ session.summary = new_summary
    │  └─ session.messages = messages[boundary:]
    │
@@ -159,102 +159,102 @@ User Input
    ├─ store.save(session)  [agent.py:87]
     │
     ▼
-4. FOR each step (1 to max_steps):
+4. FOR 每一步（1 到 max_steps）：
     │
-    ├─ msgs = build_messages(system_prompt, session)
-    │  └─ src/agent.py:91
-    │  └─ src/context_manager.py:132
-    │     ├─ [{"role": "system", "content": system_prompt}]
-    │     ├─ IF summary: [{"role": "system", "content": "Session memory..." + summary}]
-    │     └─ + session.messages (includes current user msg + any prior tool results)
-    │
-    ├─ response = llm_client.complete(messages=msgs, tools=tools_schema)
-    │  └─ src/agent.py:96-98
-    │
-    ├─ IF tool_calls:
-    │  ├─ append assistant msg (with tool_calls) → session.messages [agent.py:194]
-    │  ├─ store.save(session) [agent.py:195]
-    │  ├─ FOR each tool call:
-    │  │  ├─ execute tool [agent.py:201]
-    │  │  ├─ append trace [agent.py:237]
-    │  │  ├─ append tool msg → session.messages [agent.py:239-246]
-    │  │  └─ store.save(session) [agent.py:247]
-    │  └─ loop back to step 4 (next iteration)
-    │
-    ├─ ELIF content:
-    │  ├─ append assistant msg → session.messages [agent.py:110-112]
-    │  ├─ store.save(session) [agent.py:113]
-    │  ├─ append trace [agent.py:122]
-    │  ├─ store.save(session) [agent.py:123]
-    │  └─ return AgentResult [agent.py:124-129]
-    │
-    └─ ELSE (empty):
-       ├─ store.save(session) [agent.py:132]
-       ├─ append error trace [agent.py:142]
-       ├─ store.save(session) [agent.py:143]
-       └─ raise InvalidLLMResponseError [agent.py:144-147]
+   ├─ msgs = build_messages(system_prompt, session)
+   │  └─ src/agent.py:91
+   │  └─ src/context_manager.py:132
+   │     ├─ [{"role": "system", "content": system_prompt}]
+   │     ├─ IF 有摘要：[{"role": "system", "content": "Session memory..." + summary}]
+   │     └─ + session.messages（包括当前用户消息及之前的工具结果）
+   │
+   ├─ response = llm_client.complete(messages=msgs, tools=tools_schema)
+   │  └─ src/agent.py:96-98
+   │
+   ├─ IF 有 tool_calls：
+   │  ├─ 追加 assistant 消息（带 tool_calls）→ session.messages [agent.py:194]
+   │  ├─ store.save(session) [agent.py:195]
+   │  ├─ FOR 每个工具调用：
+   │  │  ├─ 执行工具 [agent.py:201]
+   │  │  ├─ 追加追踪 [agent.py:237]
+   │  │  ├─ 追加工具消息 → session.messages [agent.py:239-246]
+   │  │  └─ store.save(session) [agent.py:247]
+   │  └─ 返回步骤 4（下一轮迭代）
+   │
+   ├─ ELIF 有内容：
+   │  ├─ 追加 assistant 消息 → session.messages [agent.py:110-112]
+   │  ├─ store.save(session) [agent.py:113]
+   │  ├─ 追加追踪 [agent.py:122]
+   │  ├─ store.save(session) [agent.py:123]
+   │  └─ 返回 AgentResult [agent.py:124-129]
+   │
+   └─ ELSE（空）：
+      ├─ store.save(session) [agent.py:132]
+      ├─ 追加错误追踪 [agent.py:142]
+      ├─ store.save(session) [agent.py:143]
+      └─ 抛出 InvalidLLMResponseError [agent.py:144-147]
 ```
 
-Key observation: `prepare_session` is called **once per run**, **before** the current user message is appended. It only compresses messages from **previous** runs, never the current turn.
+关键观察：`prepare_session` 在**每次运行**时**仅调用一次**，在**当前用户消息追加之前**。它只压缩**之前运行**的消息，从不压缩当前轮次。
 
 ---
 
-## 3. Current Context Composition
+## 3. 当前上下文组成
 
-### Final message list sent to LLM
+### 发送给 LLM 的最终消息列表
 
 ```
-Index  Role       Content
+索引  Role       内容
 ────── ────────── ──────────────────────────────────────────────
-0      system     SYSTEM_PROMPT (from src/prompt.py)
+0      system     SYSTEM_PROMPT（来自 src/prompt.py）
 1*     system     "Session memory summary. Treat this as previous
                   conversation context, but prefer current tool
                   results when conflicts exist:\n" + session.summary
-2..N   user/      session.messages (remaining after compression
-       assistant  + current turn's user message
-       /tool      + tool_call messages + tool result messages)
+2..N   user/      session.messages（压缩后剩余的消息
+       assistant  + 当前轮次的用户消息
+       /tool      + tool_call 消息 + tool result 消息）
 ```
 
-`*` — only present if `session.summary` is non-empty.
+`*` —— 仅在 `session.summary` 非空时存在。
 
-### What IS included in context
+### 上下文**包含**的内容
 
-| Data | Included | Source |
+| 数据 | 包含 | 来源 |
 |---|---|---|
-| System Prompt | ✅ Always | `src/prompt.py` |
-| Summary (deterministic) | ✅ When `session.summary != ""` | `build_messages()` line 141 |
-| Current user input | ✅ Appended at agent.py:86 | `session.messages` |
-| Previous user inputs | ✅ Remaining after compression | `session.messages` |
-| Assistant tool_call msgs | ✅ Appended at agent.py:194 | `session.messages` |
-| Tool result msgs | ✅ Appended at agent.py:239-246 | `session.messages` |
-| Assistant final answers | ✅ Appended at agent.py:110 | `session.messages` |
-| Tool schema | ✅ Passed as `tools` param | `export_openai_schema()` |
+| 系统提示 | ✅ 始终 | `src/prompt.py` |
+| 摘要（确定性） | ✅ 当 `session.summary != ""` 时 | `build_messages()` 第 141 行 |
+| 当前用户输入 | ✅ 在 agent.py:86 追加 | `session.messages` |
+| 之前的用户输入 | ✅ 压缩后剩余 | `session.messages` |
+| Assistant tool_call 消息 | ✅ 在 agent.py:194 追加 | `session.messages` |
+| 工具结果消息 | ✅ 在 agent.py:239-246 追加 | `session.messages` |
+| Assistant 最终回答 | ✅ 在 agent.py:110 追加 | `session.messages` |
+| 工具模式 | ✅ 作为 `tools` 参数传递 | `export_openai_schema()` |
 
-### What is NOT included in context
+### 上下文**不包含**的内容
 
-| Data | Excluded? | Where stored | Why |
+| 数据 | 排除？ | 存储位置 | 原因 |
 |---|---|---|---|
-| Todo items | ❌ NOT in context | `session.todos` | Accessed via tool calls only |
-| Trace steps | ❌ NOT in context | `session.traces` | CLI display / debugging only |
-| `decision_summary` | ❌ NOT in context | `TraceStep.decision_summary` | For trace/debug, not model input |
-| Full chain-of-thought | ❌ NOT in context | Not stored at all | Prompt says "do not output" |
-| API Key | ❌ NOT in context | `os.environ` / `LLMSettings` | Never logged or serialized |
-| SQLite metadata | ❌ NOT in context | SQLite `created_at`/`updated_at` | Storage-only |
-| `ToolContext` | ❌ NOT in context | Created per-run | Runtime-only, not serialized |
+| 待办事项 | ❌ 不在上下文中 | `session.todos` | 仅通过工具调用访问 |
+| 追踪步骤 | ❌ 不在上下文中 | `session.traces` | 仅用于 CLI 显示/调试 |
+| `decision_summary` | ❌ 不在上下文中 | `TraceStep.decision_summary` | 用于追踪/调试，非模型输入 |
+| 完整思维链 | ❌ 不在上下文中 | 未存储 | 提示要求"不要输出" |
+| API 密钥 | ❌ 不在上下文中 | `os.environ` / `LLMSettings` | 从不记录或序列化 |
+| SQLite 元数据 | ❌ 不在上下文中 | SQLite `created_at`/`updated_at` | 仅存储使用 |
+| `ToolContext` | ❌ 不在上下文中 | 每次运行创建 | 仅运行时，不序列化 |
 
 ---
 
-## 4. Compression Trigger Conditions
+## 4. 压缩触发条件
 
-### Default threshold
+### 默认阈值
 
 ```python
 ContextPolicy(max_estimated_tokens=6000)  # src/context_manager.py:12
 ```
 
-Can be overridden via `AGENT_CONTEXT_MAX_TOKENS` env var.
+可通过 `AGENT_CONTEXT_MAX_TOKENS` 环境变量覆盖。
 
-### Token estimation method
+### Token 估算方法
 
 ```python
 def estimate_tokens(messages: list[dict]) -> int:
@@ -263,9 +263,9 @@ def estimate_tokens(messages: list[dict]) -> int:
     return max(1, len(text) // 4)
 ```
 
-This is a **byte-length proxy** — serializes all messages to JSON, divides character count by 4. This is a rough estimator, not a real tokenizer. It counts all keys, tool_calls structures, etc.
+这是一个**字节长度代理**——将所有消息序列化为 JSON，字符数除以 4。这是粗略估计，并非真正的分词器。它计算所有键、tool_calls 结构等。
 
-### Judgement expression (actual code)
+### 判断表达式（实际代码）
 
 ```python
 # src/context_manager.py:109-115
@@ -278,31 +278,31 @@ def prepare_session(self, session: Session) -> bool:
     boundary = _find_compress_boundary(session.messages, self._policy.keep_recent_user_turns)
     if boundary <= 0:
         return False
-    # ... compress ...
+    # ... 压缩 ...
     return True
 ```
 
-Three conditions must ALL be true:
+三个条件**必须全部**满足：
 1. `estimate_tokens >= max_estimated_tokens`
-2. `_find_compress_boundary() > 0` (more user turns than keep count)
-3. `session.messages` is non-empty
+2. `_find_compress_boundary() > 0`（用户轮次超过保留数）
+3. `session.messages` 非空
 
-### `prepare_session` call timing
+### `prepare_session` 调用时机
 
-- Called at `src/agent.py:84` — **once per `agent.run()` invocation**
-- Called **before** `session.messages.append({"role": "user", "content": user_input})` (agent.py:86)
-- Therefore, compression acts on the **previous run's messages**, never the current input
-- Not called a second time during the step loop, even if many tool calls add many more messages
+- 在 `src/agent.py:84` 调用 —— 每次 `agent.run()` 调用**一次**
+- 在 `session.messages.append({"role": "user", "content": user_input})`（agent.py:86）**之前**调用
+- 因此，压缩作用于**上次运行的消息**，从不作用于当前输入
+- 在步骤循环中不会再次调用，即使多次工具调用添加了大量消息
 
-### Whether compression can trigger multiple times in one `run()`
+### 压缩是否能在一次 `run()` 中多次触发
 
-**No.** `prepare_session()` is called once at line 84, before the step loop. The step loop (lines 90-163) appends tool_calls and tool results but never calls `prepare_session()` again. A single `run()` can add up to `max_steps` rounds of tool calls without re-evaluating for compression.
+**不能。** `prepare_session()` 在第 84 行被调用一次，在步骤循环之前。步骤循环（第 90-163 行）追加 tool_calls 和工具结果，但不会再调用 `prepare_session()`。单次 `run()` 最多可以添加 `max_steps` 轮工具调用而不重新评估是否需要压缩。
 
 ---
 
-## 5. Compression Boundary Algorithm
+## 5. 压缩边界算法
 
-### Core algorithm (`_find_compress_boundary`, src/context_manager.py:83-95)
+### 核心算法（`_find_compress_boundary`，src/context_manager.py:83-95）
 
 ```python
 def _find_compress_boundary(messages: list[dict], keep_turns: int) -> int:
@@ -319,149 +319,149 @@ def _find_compress_boundary(messages: list[dict], keep_turns: int) -> int:
     return len(messages)
 ```
 
-**Strategy:** Count user messages, determine how many "excess" turns precede the `keep_turns` most recent ones. Walk forward and return the index of the first message of the first turn to keep.
+**策略：** 统计用户消息数，确定"超出"最后 `keep_turns` 轮之前有多少轮。向前遍历，返回第一个要保留轮次的索引。
 
-### Examples
+### 示例
 
-#### Example 1: Plain chat (2 turns, keep=4)
+#### 示例 1：纯对话（2 轮，keep=4）
 
 ```
 Messages: [user:q1, asst:a1, user:q2, asst:a2]
-user_count = 2 ≤ 4  →  return 0  (no compression)
+user_count = 2 ≤ 4  →  return 0（不压缩）
 ```
 
-#### Example 2: Plain chat (3 turns, keep=2)
+#### 示例 2：纯对话（3 轮，keep=2）
 
 ```
 Messages: [user:q1, asst:a1, user:q2, asst:a2, user:q3, asst:a3]
 user_count = 3 > 2
 turns_to_skip = 1
-Walk:
-  i=0: user:q1 → seen=1, seen ≤ 1 → continue
+遍历：
+  i=0: user:q1 → seen=1, seen ≤ 1 → 继续
   i=1: asst:a1
   i=2: user:q2 → seen=2, seen > 1 → return 2
 ```
-Result: compress indices [0, 1) (messages 0-1), keep [2, 3, 4, 5].
+结果：压缩 [0, 1)（消息 0-1），保留 [2, 3, 4, 5]。
 
-#### Example 3: Single tool call turn (3 turns, keep=2)
+#### 示例 3：单工具调用轮次（3 轮，keep=2）
 
 ```
 [user:q1, asst(tc), tool, asst:final, user:q2, asst:a2, user:q3, asst:a3]
 user_count = 3 > 2
 turns_to_skip = 1
-Walk:
-  i=0: user:q1 → seen=1, seen ≤ 1 → continue
-  i=1: asst(tc) → not user
-  i=2: tool → not user
-  i=3: asst:final → not user
+遍历：
+  i=0: user:q1 → seen=1, seen ≤ 1 → 继续
+  i=1: asst(tc) → 不是 user
+  i=2: tool → 不是 user
+  i=3: asst:final → 不是 user
   i=4: user:q2 → seen=2, seen > 1 → return 4
 ```
-Result: compress [0..3] (entire first tool turn), keep [4..7].
+结果：压缩 [0..3]（整个第一轮工具调用），保留 [4..7]。
 
-#### Example 4: Parallel tool calls (2 turns, keep=1)
+#### 示例 4：并行工具调用（2 轮，keep=1）
 
 ```
 [user:q1, asst:final:q1, user:q2, asst(tc1+tc2), tool:r1, tool:r2, asst:done]
 user_count = 2 > 1
 turns_to_skip = 1
-Walk:
-  i=0: user:q1 → seen=1, seen ≤ 1 → continue
-  i=1: asst:a1 → not user
+遍历：
+  i=0: user:q1 → seen=1, seen ≤ 1 → 继续
+  i=1: asst:a1 → 不是 user
   i=2: user:q2 → seen=2, seen > 1 → return 2
 ```
-Result: compress [0..1], keep [2..6].
+结果：压缩 [0..1]，保留 [2..6]。
 
-#### Example 5: Tool error (assistant content=null, tool fails)
+#### 示例 5：工具错误（assistant content=null，工具失败）
 
-Same as Example 3 — the algorithm only counts user messages, so the error messages are treated as part of their turn.
+与示例 3 相同——算法只统计用户消息，因此错误消息被视为其轮次的一部分。
 
-#### Example 6: Last turn has no final answer
+#### 示例 6：最后一轮无最终答案
 
-If the last turn is `[user, asst(tc), tool]` without a final assistant message, the user_count still counts it as a turn. The boundary will be placed at the user message of the next turn to keep. The incomplete turn will be included in the kept messages.
+如果最后一轮是 `[user, asst(tc), tool]` 而没有最终 assistant 消息，user_count 仍然将其计为一轮。边界将放在要保留的下一轮用户消息处。不完整的轮次将包含在保留消息中。
 
-#### Example 7: Orphan tool messages
+#### 示例 7：孤立的工具消息
 
-If a tool result exists without a preceding user message (unlikely in normal operation), the algorithm would still group around user boundaries. Orphan tool messages between two user turns would be kept with the second turn.
+如果工具结果没有前导的用户消息（正常操作中不太可能），算法仍会围绕用户边界进行分组。两个用户轮次之间的孤立工具消息将与第二轮一起保留。
 
-### Critical property: user boundary alignment
+### 关键属性：用户边界对齐
 
-The boundary always lands on a `user` message (or at the very end). This guarantees:
-- Tool call sequences (assistant with tool_calls → zero or more tool results → assistant final) are **never split** across the compress boundary.
-- No orphan `tool` messages in the remaining messages (all tool results belong to turns that are fully kept).
-- The to_compress slice starts at index 0, always a coherent sequence of complete turns.
+边界始终落在 `user` 消息上（或在最末尾）。这保证：
+- 工具调用序列（带 tool_calls 的 assistant → 零或多个工具结果 → assistant 最终回答）**从不**跨压缩边界分割。
+- 剩余消息中没有孤立的 `tool` 消息（所有工具结果属于完整保留的轮次）。
+- to_compress 切片从索引 0 开始，始终是完整轮次的有序序列。
 
 ---
 
-## 6. Current Summary Format
+## 6. 当前摘要格式
 
-### `_summarize_messages` (src/context_manager.py:24-56)
+### `_summarize_messages`（src/context_manager.py:24-56）
 
-Each message role is converted to a deterministic text line:
+每个消息角色被转换为确定性文本行：
 
-| Role | Pattern | Example |
+| 角色 | 模式 | 示例 |
 |---|---|---|
 | user | `- 用户请求：{content}` | `- 用户请求：Calculate 15 * 23` |
-| assistant (with tool_calls) | `- 调用工具：{name}，{args}` | `- 调用工具：calculator，{"expression":"15*23"}` |
+| assistant（带 tool_calls） | `- 调用工具：{name}，{args}` | `- 调用工具：calculator，{"expression":"15*23"}` |
 | tool | `- 工具结果（{name}）：{content}` | `- 工具结果（calculator）：{"ok":true,"result":"345.0"}` |
-| assistant (final) | `- 助手回答：{content}` | `- 助手回答：15 * 23 = 345` |
+| assistant（最终回答） | `- 助手回答：{content}` | `- 助手回答：15 * 23 = 345` |
 
-### Character truncation per item
+### 每项字符截断
 
-Each item is truncated to `max_item_chars` (default 300) via:
+每个项目截断至 `max_item_chars`（默认 300）：
 ```python
 def _truncate(text: str, max_chars: int) -> str:
     return text[:max_chars] + "..."
 ```
 
-### Summary merge (`_merge_summary`, src/context_manager.py:59-80)
+### 摘要合并（`_merge_summary`，src/context_manager.py:59-80）
 
 ```python
 def _merge_summary(existing: str, new_entries: list[str], max_chars: int) -> str:
 ```
 
-| Scenario | Behavior |
+| 场景 | 行为 |
 |---|---|
-| No existing summary | Use new_entries; truncate if exceeds max_chars |
-| Combined fits | `existing + "\n" + new_text` |
-| Combined exceeds | Reserve 50 chars for truncation marker; try to keep all new_text |
-| New text too long | Truncate new_text to `max_chars - 50` |
-| New fits, old too long | Keep last `max_chars - len(new_text) - 1` chars of old |
-| Very little room | Discard old, return new_text + truncation marker |
+| 无现有摘要 | 使用新条目；超过 max_chars 则截断 |
+| 合并后合适 | `existing + "\n" + new_text` |
+| 合并后超出 | 为截断标记保留 50 字符；尽量保留全部 new_text |
+| 新文本太长 | 将 new_text 截断至 `max_chars - 50` |
+| 新文本合适但旧文本太长 | 保留旧文本的最后 `max_chars - len(new_text) - 1` 个字符 |
+| 空间极有限 | 丢弃旧文本，返回 new_text + 截断标记 |
 
-### Real summary example
+### 真实摘要示例
 
-For a compressed session with 2 plain turns and 1 tool turn:
+对于一个包含 2 个纯对话轮次和 1 个工具轮次的压缩会话：
 
 ```
-- 用户请求：What is the weather today?
-- 助手回答：It is sunny and 25 degrees.
-- 用户请求：Calculate 15 * 23
+- 用户请求：今天天气怎么样？
+- 助手回答：晴天，25 度。
+- 用户请求：计算 15 * 23
 - 调用工具：calculator，{"expression":"15*23"}
 - 工具结果（calculator）：{"ok":true,"result":"345.0"}
 - 助手回答：15 * 23 = 345
 ```
 
-### `None` content handling
+### `None` 内容处理
 
 ```python
-# Line 31-32
+# 第 31-32 行
 content = msg.get("content", "")
 if content is None:
     content = ""
 ```
 
-Assistant tool_call messages typically have `"content": null`, which is converted to empty string and summarized as `- 助手回答：` (for the `assistant` without tool_calls branch). But if it has `tool_calls` key, it's caught by the earlier branch at line 35:
+Assistant tool_call 消息通常有 `"content": null`，会被转为空字符串并在（不带 tool_calls 的 `assistant` 分支中）摘要为 `- 助手回答：`。但如果它有 `tool_calls` 键，会在第 35 行的较早分支中被捕获：
 ```python
 elif msg.get("role") == "assistant" and "tool_calls" in msg:
 ```
 
-So tool_call messages never hit the "assistant" text branch.
+因此 tool_call 消息永远不会进入"assistant"文本分支。
 
 ---
 
-## 7. SQLite Persistence
+## 7. SQLite 持久化
 
-### Serialization (`_serialize`, src/sqlite_session.py:38-48)
+### 序列化（`_serialize`，src/sqlite_session.py:38-48）
 
 ```python
 def _serialize(session: Session) -> str:
@@ -473,292 +473,292 @@ def _serialize(session: Session) -> str:
     }, ensure_ascii=False, default=str)
 ```
 
-### Deserialization (`_deserialize`, src/sqlite_session.py:51-67)
+### 反序列化（`_deserialize`，src/sqlite_session.py:51-67）
 
-Validates:
-- JSON is valid
-- Root is a dict
-- All 4 keys exist
+验证：
+- JSON 格式正确
+- 根是一个字典
+- 全部 4 个键存在
 
-If JSON is corrupted: raises `SessionPersistenceError`.
+如果 JSON 损坏：抛出 `SessionPersistenceError`。
 
-### Per-field handling
+### 各字段处理
 
-| Field | Stored as | Restored to |
+| 字段 | 存储为 | 恢复为 |
 |---|---|---|
-| `messages` | Full JSON array | `Session.messages` (same structure) |
-| `summary` | Plain string | `Session.summary` |
-| `todos` | Full JSON array | `Session.todos` |
-| `traces` | Full JSON array | `Session.traces` |
+| `messages` | 完整 JSON 数组 | `Session.messages`（相同结构） |
+| `summary` | 纯文本字符串 | `Session.summary` |
+| `todos` | 完整 JSON 数组 | `Session.todos` |
+| `traces` | 完整 JSON 数组 | `Session.traces` |
 
-All fields survive `save()` → process restart → `get_or_create()` intact.
+所有字段在 `save()` → 进程重启 → `get_or_create()` 过程中完整保留。
 
-### `session.summary` persistence
+### `session.summary` 持久化
 
-`summary` is a string field in the dataclass, serialized as a JSON string value. It is **not** a separate SQLite column — it lives inside `state_json`. Its value is preserved across process restarts.
+`summary` 是 dataclass 中的字符串字段，作为 JSON 字符串值序列化。它不是独立的 SQLite 列——它存在于 `state_json` 内部。其值在进程重启后保持不变。
 
 ---
 
-## 8. Test Mapping (`tests/test_context_manager.py`)
+## 8. 测试映射（`tests/test_context_manager.py`）
 
-Total: **39 test functions** across 11 test classes + 1 standalone.
+总计：**39 个测试函数**，分布在 11 个测试类 + 1 个独立测试。
 
-### Token Estimation (3 tests)
+### Token 估算（3 个测试）
 
-| Test | Assertion |
+| 测试 | 断言 |
 |---|---|
 | `test_empty_returns_zero` | `estimate_tokens([]) == 0` |
 | `test_non_empty_at_least_one` | `estimate_tokens([{"role":"user","content":"hi"}]) >= 1` |
-| `test_includes_tool_calls` | Estimate includes tool_call + tool_result in count |
+| `test_includes_tool_calls` | 估算包含 tool_call + tool_result 的计数 |
 
-### Truncation (2 tests)
+### 截断（2 个测试）
 
-| Test | Assertion |
+| 测试 | 断言 |
 |---|---|
-| `test_short_unchanged` | `_truncate("hello", 10)` returns `"hello"` |
-| `test_long_truncated` | `_truncate("hello world", 5)` returns `"hello..."` (8 chars) |
+| `test_short_unchanged` | `_truncate("hello", 10)` 返回 `"hello"` |
+| `test_long_truncated` | `_truncate("hello world", 5)` 返回 `"hello..."`（8 字符） |
 
-### Boundary Identification (6 tests)
+### 边界识别（6 个测试）
 
-| Test | Assertion |
+| 测试 | 断言 |
 |---|---|
 | `test_no_messages` | `_find_compress_boundary([], 4) == 0` |
-| `test_fewer_turns_than_keep` | 1 turn with keep=4 → 0 |
-| `test_exact_turns_no_compress` | 2 turns with keep=2 → 0 |
-| `test_more_turns_than_keep` | 3 turns with keep=2 → boundary at index 2 |
-| `test_more_turns_keeps_last_n` | 4 turns with keep=2 → boundary at index 4 |
-| `test_tool_turns_boundary` | 3 turns (1 tool turn) with keep=2 → boundary at index 4 |
+| `test_fewer_turns_than_keep` | 1 轮 keep=4 → 0 |
+| `test_exact_turns_no_compress` | 2 轮 keep=2 → 0 |
+| `test_more_turns_than_keep` | 3 轮 keep=2 → 边界在索引 2 |
+| `test_more_turns_keeps_last_n` | 4 轮 keep=2 → 边界在索引 4 |
+| `test_tool_turns_boundary` | 3 轮（1 个工具轮）keep=2 → 边界在索引 4 |
 
-### Summary Generation (4 tests)
+### 摘要生成（4 个测试）
 
-| Test | Assertion |
+| 测试 | 断言 |
 |---|---|
-| `test_user_and_assistant` | Entries contain "用户请求" and "助手回答" |
-| `test_tool_calls_summarized` | Entries contain "调用工具" and "工具结果" |
-| `test_long_content_truncated` | Long content has "..." |
-| `test_content_none_handled` | `None` content handled gracefully |
+| `test_user_and_assistant` | 条目包含"用户请求"和"助手回答" |
+| `test_tool_calls_summarized` | 条目包含"调用工具"和"工具结果" |
+| `test_long_content_truncated` | 长内容包含"..." |
+| `test_content_none_handled` | `None` 内容被优雅处理 |
 
-### Summary Merge (4 tests)
+### 摘要合并（4 个测试）
 
-| Test | Assertion |
+| 测试 | 断言 |
 |---|---|
-| `test_no_existing` | New entries become the summary |
-| `test_combines_existing_and_new` | Both old and new appear |
-| `test_trims_when_exceeds_max` | Length ≤ max_chars + slack |
-| `test_prefers_newer_content` | New content retained over old |
+| `test_no_existing` | 新条目成为摘要 |
+| `test_combines_existing_and_new` | 新旧内容均出现 |
+| `test_trims_when_exceeds_max` | 长度 ≤ max_chars + 松弛量 |
+| `test_prefers_newer_content` | 新内容优先于旧内容保留 |
 
-### Session Compression (8 tests)
+### 会话压缩（8 个测试）
 
-| Test | Assertion |
+| 测试 | 断言 |
 |---|---|
-| `test_no_compress_when_below_threshold` | Returns False, messages unchanged |
-| `test_compress_when_above_threshold` | Returns True, messages reduced |
-| `test_keeps_recent_turns` | Keeps last 2 user turns (4 messages) |
-| `test_no_compress_if_empty` | Empty messages → False |
-| `test_summary_created_after_compress` | Summary non-empty, contains compressed content |
-| `test_tool_call_not_split_from_result` | All 4 messages of tool turn kept, `remaining[0]` is "user" |
-| `test_parallel_tool_calls_preserved` | 5 messages kept (user + 2 parallel tool_calls + 2 results + done) |
-| `test_summary_length_limited` | Summary length ≤ max_summary_chars + slack |
+| `test_no_compress_when_below_threshold` | 返回 False，消息不变 |
+| `test_compress_when_above_threshold` | 返回 True，消息减少 |
+| `test_keeps_recent_turns` | 保留最后 2 轮用户消息（4 条消息） |
+| `test_no_compress_if_empty` | 空消息 → False |
+| `test_summary_created_after_compress` | 摘要非空，包含已压缩内容 |
+| `test_tool_call_not_split_from_result` | 工具轮的全部 4 条消息保留，`remaining[0]` 是"user" |
+| `test_parallel_tool_calls_preserved` | 保留 5 条消息（user + 2 个并行 tool_calls + 2 个结果 + done） |
+| `test_summary_length_limited` | 摘要长度 ≤ max_summary_chars + 松弛量 |
 
-### Session Isolation (2 tests)
+### 会话隔离（2 个测试）
 
-| Test | Assertion |
+| 测试 | 断言 |
 |---|---|
-| `test_session_a_not_affect_b` | Session A compressed does not affect Session B |
-| `test_todos_and_traces_untouched` | Compression does not modify todos or traces |
+| `test_session_a_not_affect_b` | 会话 A 压缩不影响会话 B |
+| `test_todos_and_traces_untouched` | 压缩不修改 todos 或 traces |
 
-### Message Building (4 tests)
+### 消息构建（4 个测试）
 
-| Test | Assertion |
+| 测试 | 断言 |
 |---|---|
-| `test_no_summary_no_extra_message` | 3 messages: system + user + assistant |
-| `test_with_summary_injected` | 3 messages: system + system(summary) + user |
-| `test_summary_position_after_system` | Summary is 2nd message (after system prompt, before user) |
-| `test_current_user_input_preserved` | Current user input appears in built messages |
+| `test_no_summary_no_extra_message` | 3 条消息：system + user + assistant |
+| `test_with_summary_injected` | 3 条消息：system + system(summary) + user |
+| `test_summary_position_after_system` | 摘要是第 2 条消息（在系统提示之后，用户之前） |
+| `test_current_user_input_preserved` | 当前用户输入出现在构建的消息中 |
 
-### AgentRuntime Integration (4 tests)
+### AgentRuntime 集成（4 个测试）
 
-| Test | Assertion |
+| 测试 | 断言 |
 |---|---|
-| `test_llm_receives_summary_after_compress` | Summary in call_history after compression |
-| `test_plain_chat_after_compress_still_works` | Second answer returned correctly |
-| `test_todo_after_compress_still_accessible` | Todos survive compression |
-| `test_normal_pytest_no_real_api` | ScriptedLLMClient used (index incremented) |
+| `test_llm_receives_summary_after_compress` | 压缩后 call_history 中有摘要 |
+| `test_plain_chat_after_compress_still_works` | 第二个回答正确返回 |
+| `test_todo_after_compress_still_accessible` | 待办在压缩后仍然可用 |
+| `test_normal_pytest_no_real_api` | 使用 ScriptedLLMClient（索引递增） |
 
-### Existing Tests Not Broken (1 test)
+### 已有测试未被破坏（1 个测试）
 
-| Test | Assertion |
+| 测试 | 断言 |
 |---|---|
-| `test_agent_tests_import` | Module imports without error |
+| `test_agent_tests_import` | 模块导入无错误 |
 
 ---
 
-## 9. Current Limitations and Risks
+## 9. 当前限制与风险
 
-### 9.1 Rule-based summary loses implied semantics
+### 9.1 基于规则的摘要丢失隐含语义
 
-The deterministic `_summarize_messages` uses fixed Chinese templates (`- 用户请求：`). It:
-- Does NOT infer intent, sentiment, or implicit constraints
-- Does NOT distinguish between a question and a command
-- Loses the conversational nuance of the original exchange
+确定性 `_summarize_messages` 使用固定的中文模板（`- 用户请求：`）。它：
+- **不推断**意图、情感或隐含约束
+- **不区分**问题和命令
+- 丢失原始对话的语义细节
 
-Example: "I think it might rain" vs "Close the window" both become `- 用户请求：{exact text}`.
+示例："我觉得可能要下雨" vs "关上窗户" 都变成了 `- 用户请求：{原文}`。
 
-### 9.2 Fact correction is not special-cased
+### 9.2 事实修正未被特殊处理
 
-If a user says "My name is Alice" in turn 1 and "Actually, call me Bob" in turn 3:
-- Turn 1 might be compressed into summary
-- Summary records "用户请求：My name is Alice"
-- No mechanism recognizes this as superseded information
-- LLM receiving both the summary (Alice) and kept turn (Bob) could experience confusion
+如果用户在第 1 轮说"我叫小明"，在第 3 轮说"其实叫我小红"：
+- 第 1 轮可能被压缩进摘要
+- 摘要记录"用户请求：我叫小明"
+- 没有机制识别这是已被覆盖的信息
+- LLM 同时收到摘要（小明）和保留的轮次（小红）可能会混淆
 
-### 9.3 Repetitive information accumulates
+### 9.3 重复信息累积
 
-Each compressed turn adds entries to the summary. Over many sessions, the summary grows and gets trimmed from the bottom (oldest content). But repeated information across turns (e.g., `- 工具结果（read_docs）：{truncated content}`) is preserved without deduplication.
+每个被压缩的轮次都会向摘要添加条目。经过多次会话，摘要不断增长并从底部（最早的内容）被截断。但跨轮次的重复信息（如 `- 工具结果（read_docs）：{截断的内容}`）在保留时没有去重。
 
-### 9.4 Extra-long tool results
+### 9.4 超长工具结果
 
-Tool results are serialized as JSON including the full result string:
+工具结果被序列化为包含完整结果字符串的 JSON：
 ```python
 observation = json.dumps({"ok": True, "result": result}, ensure_ascii=False)
 ```
 
-When this is summarized:
+当这个被摘要时：
 ```python
-content = msg.get("content", "")  # the full JSON string
+content = msg.get("content", "")  # 完整的 JSON 字符串
 entries.append(f"- 工具结果（{name}）：{_truncate(content, max_item_chars)}")
 ```
 
-Default `max_item_chars=300` means long results (read_docs returning 10,000 chars) are truncated to 300 chars + "...". Semantically important content beyond 300 chars is silently lost in the summary.
+默认 `max_item_chars=300` 意味着长结果（read_docs 返回 10000 字符）会被截断为 300 字符 + "..."。超过 300 字符的重要语义内容在摘要中被静默丢失。
 
-### 9.5 Document read results are heavily truncated
+### 9.5 文档读取结果被严重截断
 
-A read_docs result may contain 10,000+ characters. After summarization, only the first 300 characters are retained. The summary loses:
-- Which document was read
-- The actual content after 300 chars
-- Whether the result was truncated
+read_docs 结果可能包含 10000+ 字符。摘要后仅保留前 300 字符。摘要丢失：
+- 读取了哪个文档
+- 300 字符后的实际内容
+- 结果是否被截断
 
-### 9.6 User preferences and constraints degrade
+### 9.6 用户偏好和约束退化
 
-If a user says "Always use Chinese" in turn 2, this statement:
-- Is compressed into `- 用户请求：Always use Chinese`
-- Becomes a detached text line, not a persistent instruction
-- After multiple compressions, could be trimmed from the summary if space is needed for newer content
+如果用户在第 2 轮说"请用中文回答"，此声明：
+- 被压缩为 `- 用户请求：请用中文回答`
+- 变成一条孤立的文本行，而非持久指令
+- 多次压缩后，可能因空间不足而优先被新内容替换
 
-### 9.7 Stale dynamic state in old summaries
+### 9.7 旧摘要中的过时动态状态
 
-Summary entries like `- 工具结果（list_docs）：{"ok": true, "result": "file1, file2"}` represent past disk state. If the summary is injected as "current context", the LLM may mistakenly treat old file lists as current — even though Rule 13 says "prefer current tool results". The LLM must be relied upon to make this distinction.
+像 `- 工具结果（list_docs）：{"ok": true, "result": "file1, file2"}` 的摘要条目代表过去的磁盘状态。如果摘要作为"当前上下文"注入，LLM 可能错误地将旧文件列表视为当前状态——尽管规则 13 说"优先使用当前工具结果"。必须依赖 LLM 来做出这种区分。
 
-### 9.8 No hallucination guard (currently)
+### 9.8 目前缺乏幻觉防护
 
-The current summary is purely deterministic text extraction — no LLM involvement, so no hallucination risk. However:
-- The `_truncate()` function appends `"..."` without structural markers
-- Truncated JSON in tool results may look incomplete but the LLM might still try to use it
-- The truncation point falls at an arbitrary character boundary, not a semantic boundary
+当前摘要纯粹是确定性文本提取——没有 LLM 参与，因此没有幻觉风险。然而：
+- `_truncate()` 函数追加 `"..."` 而没有结构标记
+- 工具结果中被截断的 JSON 可能看起来不完整，但 LLM 仍可能尝试使用它
+- 截断点落在任意字符边界上，而不是语义边界
 
-### 9.9 Risks after LLM summary integration
+### 9.9 LLM 摘要集成后的风险
 
-When LLM semantic summarization is added, new risks include:
-- **Hallucinated summary facts** — LLM could "remember" things that never happened
-- **Contradiction between summary and recent messages** — LLM must resolve conflicts
-- **Loss of critical details** — LLM may deem unimportant what the user considers important
-- **Prompt injection via summary** — if a compressed message contained injected instructions, an LLM-powered summarizer might propagate them
-- **Increased cost and latency** — each compression triggers an additional LLM call
+引入 LLM 语义摘要后，新风险包括：
+- **编造的摘要事实** —— LLM 可能"记住"从未发生过的事
+- **摘要与最新消息之间的矛盾** —— LLM 必须解决冲突
+- **关键细节丢失** —— LLM 可能认为用户认为重要的内容不重要
+- **通过摘要进行提示注入** —— 如果被压缩的消息包含注入指令，LLM 驱动的摘要器可能传播这些指令
+- **增加成本和延迟** —— 每次压缩触发额外的 LLM 调用
 
 ---
 
-## 10. Mixed Compression Integration Design Points
+## 10. 混合压缩集成设计要点
 
-Based on the current code, the following are the precise interfaces and locations suitable for introducing Semantic Summarizer components. No implementation code is provided.
+基于当前代码，以下是适合引入语义摘要器组件的精确接口和位置。不提供实现代码。
 
-### 10.1 SemanticSummarizer Protocol — `_summarize_messages` replacement
+### 10.1 SemanticSummarizer 协议 —— `_summarize_messages` 替换
 
-**Current location:** `src/context_manager.py:24-56`, function `_summarize_messages()`
+**当前位置：** `src/context_manager.py:24-56`，函数 `_summarize_messages()`
 
-**Current signature:**
+**当前签名：**
 ```python
 def _summarize_messages(messages: list[dict], max_item_chars: int) -> list[str]:
 ```
 
-**Design interface:**
+**设计接口：**
 ```python
 class SemanticSummarizer(Protocol):
     def summarize(self, messages: list[dict], max_chars: int) -> str: ...
 ```
 
-This is the most natural injection point. `prepare_session()` line 124 calls `_summarize_messages(to_compress, ...)` and receives a `list[str]` of entries. A `SemanticSummarizer` would return a single coherent summary string instead.
+这是最自然的注入点。`prepare_session()` 第 124 行调用 `_summarize_messages(to_compress, ...)` 并接收一个 `list[str]`。`SemanticSummarizer` 将返回单个连贯的摘要字符串。
 
-**Options:**
-- `DeterministicSummarizer` — current logic, acts as fallback
-- `QwenSemanticSummarizer` — calls LLM to produce a natural-language summary
-- `FallbackSummarizer` — tries LLM, falls back to deterministic on error
+**选项：**
+- `DeterministicSummarizer` —— 当前逻辑，作为回退
+- `QwenSemanticSummarizer` —— 调用 LLM 生成自然语言摘要
+- `FallbackSummarizer` —— 尝试 LLM，出错时回退到确定性方式
 
-### 10.2 ContextManager injection point — constructor parameter
+### 10.2 ContextManager 注入点 —— 构造函数参数
 
-**Current:** `ContextManager.__init__` line 106 takes only `ContextPolicy`
+**当前：** `ContextManager.__init__` 第 106 行只接受 `ContextPolicy`
 
 ```python
 class ContextManager:
     def __init__(self, policy: ContextPolicy | None = None) -> None:
 ```
 
-**Design:** Add optional `summarizer: SemanticSummarizer | None = None` parameter. If summarizer is provided, use it in `prepare_session()`. If not, fall back to current deterministic logic.
+**设计：** 添加可选参数 `summarizer: SemanticSummarizer | None = None`。如果提供了摘要器，在 `prepare_session()` 中使用它。否则回退到当前确定性逻辑。
 
-### 10.3 Compression event notification — `prepare_session` return value
+### 10.3 压缩事件通知 —— `prepare_session` 返回值
 
-**Current:** `prepare_session()` returns `bool` (whether compression occurred).
+**当前：** `prepare_session()` 返回 `bool`（是否发生了压缩）。
 
 ```python
 def prepare_session(self, session: Session) -> bool:
 ```
 
-**Design:** Could return a `CompressionEvent` dataclass containing:
+**设计：** 可以返回一个 `CompressionEvent` 数据类，包含：
 - `compressed: bool`
 - `messages_before: int` / `messages_after: int`
 - `summary_before_len: int` / `summary_after_len: int`
-- `summarizer_used: str` ("deterministic" | "semantic")
+- `summarizer_used: str`（"deterministic" | "semantic"）
 - `tokens_saved: int`
 
-### 10.4 ContextMetrics reporting — before/after `prepare_session`
+### 10.4 ContextMetrics 报告 —— `prepare_session` 前后
 
-**Current:** `agent.py:84` calls `prepare_session()` and ignores the bool.
+**当前：** `agent.py:84` 调用 `prepare_session()` 并忽略 bool 返回值。
 
-**Design:** Both `ContextManager` and `AgentRuntime` could maintain metrics counters:
-- Number of compressions
-- Total tokens compressed
-- Summarizer type distribution
+**设计：** `ContextManager` 和 `AgentRuntime` 都可维护指标计数器：
+- 压缩次数
+- 压缩的 Token 总数
+- 摘要器类型分布
 
-### 10.5 Summary storage — `session.summary` already exists
+### 10.5 摘要存储 —— `session.summary` 已存在
 
-**Current:** `session.summary: str` stores the compressed text.
+**当前：** `session.summary: str` 存储压缩后的文本。
 
-**Design:** No schema change needed. LLM-generated summaries would also be stored as a plain string. A future enhancement could add `summary_type: str` ("deterministic" | "semantic") and `summary_version: int` fields to `Session`.
+**设计：** 不需要修改模式。LLM 生成的摘要也将作为纯字符串存储。未来增强可向 `Session` 添加 `summary_type: str`（"deterministic" | "semantic"）和 `summary_version: int` 字段。
 
-### 10.6 LLM call for summarization — when and how
+### 10.6 用于摘要的 LLM 调用 —— 何时及如何
 
-**Design considerations:**
+**设计考量：**
 
-- `prepare_session()` is currently called synchronously in `agent.run()`.
-- An LLM-based summarizer would make the first user response slower.
-- Options:
-  1. **Synchronous in prepare_session** — simple, predictable
-  2. **Async/deferred** — summarization happens after returning the current response, but requires background processing
-  3. **On-demand** — summarize only at explicit trigger (e.g., token threshold)
-- The `ScriptedLLMClient` or a dedicated summarization LLM client should be used, not `qwen_client` directly.
+- `prepare_session()` 当前在 `agent.run()` 中同步调用。
+- 基于 LLM 的摘要器会使第一个用户响应变慢。
+- 选项：
+  1. **在 prepare_session 中同步** —— 简单、可预测
+  2. **异步/延迟** —— 摘要在当前响应返回后进行，但需要后台处理
+  3. **按需** —— 仅在明确触发时摘要（如 Token 阈值）
+- 应使用 `ScriptedLLMClient` 或专用的摘要 LLM 客户端，而不是直接使用 `qwen_client`。
 
-### 10.7 Fallback strategy — `_merge_summary` compatibility
+### 10.7 回退策略 —— `_merge_summary` 兼容性
 
-**Current:** `_merge_summary()` appends new entries to existing summary.
+**当前：** `_merge_summary()` 将新条目追加到现有摘要。
 
-**Design:** The merge strategy changes fundamentally with LLM summary. Instead of text concatenation:
-- LLM receives `existing_summary + "\n" + new_messages_text` and produces a single coherent summary
-- Fallback: if LLM call fails, use current `_summarize_messages` + `_merge_summary`
+**设计：** 使用 LLM 摘要后合并策略将根本改变。不再文本拼接：
+- LLM 接收 `existing_summary + "\n" + new_messages_text` 并生成单个连贯的摘要
+- 回退：如果 LLM 调用失败，使用当前的 `_summarize_messages` + `_merge_summary`
 
-### 10.8 No-change zones
+### 10.8 不变区域
 
-These areas should NOT be modified by a summarization inject:
-- `_find_compress_boundary()` — boundary logic stays unchanged
-- `build_messages()` — message assembly pattern stays unchanged
-- `AgentRuntime.run()` — the orchestration pattern stays unchanged
-- `Session` schema — no new fields needed for this phase
-- `SQLiteSessionStore` — `state_json` format unchanged
+以下区域**不应**被摘要注入修改：
+- `_find_compress_boundary()` —— 边界逻辑保持不变
+- `build_messages()` —— 消息组装模式保持不变
+- `AgentRuntime.run()` —— 编排模式保持不变
+- `Session` 模式 —— 此阶段不需要新字段
+- `SQLiteSessionStore` —— `state_json` 格式不变

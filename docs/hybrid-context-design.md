@@ -1,80 +1,80 @@
-# Hybrid Context Compression Design
+# 混合上下文压缩设计
 
-## 1. Why Not Fully Replace Deterministic Compression
+## 1. 为什么不完全替换确定性压缩
 
-Deterministic compression is reliable, predictable, and zero-cost. It guarantees:
-- No API dependency
-- Bounded latency
-- Deterministic output
-- No credential exposure
+确定性压缩可靠、可预测且零成本。它能保证：
+- 无 API 依赖
+- 有界延迟
+- 确定性输出
+- 无凭据泄露
 
-Hybrid mode adds semantic summarization only when explicitly enabled, and always falls back to deterministic on failure.
+混合模式仅在显式启用时增加语义摘要，失败时始终回退到确定性方式。
 
-## 2. Code Responsibilities
+## 2. 代码职责
 
-The Python code layer is **always** responsible for structural integrity:
+Python 代码层**始终**负责结构完整性：
 
-- Finding the compression boundary via `_find_compress_boundary()`
-- Preserving recent N raw user turns
-- Keeping tool call ↔ tool result pairs intact
-- Ensuring no orphan/missing tool results
-- Managing `session.summary` and `session.messages`
+- 通过 `_find_compress_boundary()` 确定压缩边界
+- 保留最近 N 轮原始用户交互
+- 保持工具调用 ↔ 工具结果配对完整
+- 确保无孤立/缺失的工具结果
+- 管理 `session.summary` 和 `session.messages`
 
-The semantic summarizer only processes the **old messages** that are already slated for compression. It does not make structural decisions.
+语义摘要器仅处理**已确定要压缩的旧消息**，不做结构性决策。
 
-## 3. Qwen's Role
+## 3. Qwen 的角色
 
-Qwen (via `QwenSemanticSummarizer`) handles **semantic abstraction** of old conversation history:
+Qwen（通过 `QwenSemanticSummarizer`）负责旧对话历史的**语义抽象**：
 
-- Extracts goals, facts, corrections, preferences
-- Produces structured JSON
-- Follows correction priority (newer overrides older)
-- Avoids fabricating information
+- 提取目标、事实、修正、偏好
+- 生成结构化的 JSON
+- 遵循修正优先级（新值覆盖旧值）
+- 避免凭空编造信息
 
-The summarizer receives:
-- `previous_summary`: existing compressed context
-- `messages`: the old messages being compressed
-- `max_output_chars`: character budget
+摘要器接收：
+- `previous_summary`：已有的压缩上下文
+- `messages`：正在被压缩的旧消息
+- `max_output_chars`：字符预算
 
-## 4. Recent Turns Are Always Preserved
+## 4. 最近轮次始终保留
 
-`keep_recent_user_turns` (default: 4) ensures the most recent user-assistant exchanges remain in raw message form. The summarizer never sees or influences these.
+`keep_recent_user_turns`（默认 4）确保最近几轮用户与助手的交互保持原始消息格式。摘要器看不到也不会影响这些内容。
 
-## 5. Dynamic State via Tools
+## 5. 动态状态通过工具获取
 
-Todo items, file listings, and other dynamic state are **not** captured in the semantic summary. They remain accessible only through explicit tool calls (`todo_list`, `list_docs`, etc.). This prevents stale data from being treated as ground truth.
+待办事项、文件列表等动态状态**不会**被捕获到语义摘要中。它们只能通过明确的工具调用（`todo_list`、`list_docs` 等）获取。这防止过时数据被当作事实依据。
 
-## 6. Failure Fallback
+## 6. 失败回退
 
-All of these trigger deterministic fallback:
+以下情况均触发确定性回退：
 
-| Failure | Handling |
+| 失败类型 | 处理方式 |
 |---|---|
-| API timeout | Catch exception → fallback |
-| Auth error | Catch exception → fallback |
-| Rate limit | Catch exception → fallback |
-| Network error | Catch exception → fallback |
-| Empty response | Detect empty → fallback |
-| Invalid JSON | Parse error → fallback |
-| Bad field types | Validation error → fallback |
-| Output too long | Truncate after formatting |
+| API 超时 | 捕获异常 → 回退 |
+| 鉴权错误 | 捕获异常 → 回退 |
+| 限流 | 捕获异常 → 回退 |
+| 网络错误 | 捕获异常 → 回退 |
+| 空响应 | 检测到空 → 回退 |
+| 非法 JSON | 解析错误 → 回退 |
+| 字段类型错误 | 校验错误 → 回退 |
+| 输出超长 | 格式化后截断 |
 
-Fallback does **not** propagate to the user — the Agent Loop continues normally.
+回退**不会**传播给用户 —— Agent 循环正常运行。
 
-## 7. Default Mode
+## 7. 默认模式
 
-The default mode is `deterministic`. Hybrid mode must be explicitly enabled:
+默认为 `deterministic`。混合模式需要显式启用：
 
 ```dotenv
 AGENT_CONTEXT_SUMMARY_MODE=hybrid
 ```
 
-## 8. Metrics Comparison
+## 8. 指标对比
 
-Only five categories are compared between modes:
+两种模式之间只比较五类指标：
 
-1. **Compression**: event count, token reduction %
-2. **Fact recall**: rate from semantic probes
-3. **Latest corrections**: correct deadline value
-4. **Structure**: orphan/missing tool results, isolation leaks
-5. **Overhead**: semantic call count, fallback count, latency
+1. **压缩**：事件数、Token 减少率
+2. **事实召回**：语义探针通过率
+3. **最新修正**：截止时间正确性
+4. **结构**：孤立/缺失的工具结果、隔离泄漏
+5. **开销**：语义调用次数、回退次数、延迟
