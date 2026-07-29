@@ -97,6 +97,28 @@ def _parse_positive_int(name: str, value: str | None, default: int) -> int:
     return parsed
 
 
+def load_summary_mode() -> str:
+    mode = os.environ.get("AGENT_CONTEXT_SUMMARY_MODE", "deterministic").strip().lower()
+    if mode not in ("deterministic", "hybrid"):
+        raise LLMConfigurationError(
+            f"AGENT_CONTEXT_SUMMARY_MODE must be 'deterministic' or 'hybrid', "
+            f"got '{mode}'."
+        )
+    return mode
+
+
+def load_summary_model() -> str:
+    return os.environ.get("AGENT_CONTEXT_SUMMARY_MODEL", "").strip() or os.environ.get("AGENT_MODEL", "qwen3.6-plus").strip()
+
+
+def load_summary_max_chars() -> int:
+    return _parse_positive_int(
+        "AGENT_CONTEXT_SUMMARY_MAX_CHARS",
+        os.environ.get("AGENT_CONTEXT_SUMMARY_MAX_CHARS"),
+        1800,
+    )
+
+
 def load_context_policy() -> ContextPolicy:
     max_tokens = _parse_positive_int(
         "AGENT_CONTEXT_MAX_TOKENS",

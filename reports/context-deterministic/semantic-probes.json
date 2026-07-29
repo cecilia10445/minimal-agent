@@ -1,0 +1,72 @@
+[
+  {
+    "probe": "我的项目代号是什么？",
+    "error": "Error code: 403 - {'error': {'message': 'Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.', 'type': 'AllocationQuota.FreeTierOnly', 'param': None, 'code': 'AllocationQuota.FreeTierOnly'}, 'id': 'chatcmpl-4174c8dc-bcba-9e81-90fe-552d8ea412a2', 'request_id': '4174c8dc-bcba-9e81-90fe-552d8ea412a2'}",
+    "passed": false,
+    "details": {},
+    "answer_preview": ""
+  },
+  {
+    "probe": "最终截止时间是什么？不要回答已经作废的最初时间。",
+    "error": "Error code: 403 - {'error': {'message': 'Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.', 'type': 'AllocationQuota.FreeTierOnly', 'param': None, 'code': 'AllocationQuota.FreeTierOnly'}, 'id': 'chatcmpl-e3145e5f-3184-9246-8b23-f0c1226b150f', 'request_id': 'e3145e5f-3184-9246-8b23-f0c1226b150f'}",
+    "passed": false,
+    "details": {},
+    "answer_preview": ""
+  },
+  {
+    "probe": "这个项目禁止使用什么框架控制主流程？",
+    "error": "Error code: 403 - {'error': {'message': 'Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.', 'type': 'AllocationQuota.FreeTierOnly', 'param': None, 'code': 'AllocationQuota.FreeTierOnly'}, 'id': 'chatcmpl-e43201d4-58c6-95fd-be21-4ae6aac94138', 'request_id': 'e43201d4-58c6-95fd-be21-4ae6aac94138'}",
+    "passed": false,
+    "details": {},
+    "answer_preview": ""
+  },
+  {
+    "probe": "我的回答偏好是什么？",
+    "error": "Error code: 403 - {'error': {'message': 'Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.', 'type': 'AllocationQuota.FreeTierOnly', 'param': None, 'code': 'AllocationQuota.FreeTierOnly'}, 'id': 'chatcmpl-2bad83c3-616e-9140-bba8-ca7b6b233ab6', 'request_id': '2bad83c3-616e-9140-bba8-ca7b6b233ab6'}",
+    "passed": false,
+    "details": {},
+    "answer_preview": ""
+  },
+  {
+    "probe": "我的学习目标是什么？",
+    "error": "Error code: 403 - {'error': {'message': 'Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.', 'type': 'AllocationQuota.FreeTierOnly', 'param': None, 'code': 'AllocationQuota.FreeTierOnly'}, 'id': 'chatcmpl-e646e059-8f5c-9224-bde4-00da2892c936', 'request_id': 'e646e059-8f5c-9224-bde4-00da2892c936'}",
+    "passed": false,
+    "details": {},
+    "answer_preview": ""
+  },
+  {
+    "probe": "当前完成顺序是什么？",
+    "error": "Error code: 403 - {'error': {'message': 'Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.', 'type': 'AllocationQuota.FreeTierOnly', 'param': None, 'code': 'AllocationQuota.FreeTierOnly'}, 'id': 'chatcmpl-fbf80406-86ad-9830-9ebe-711be33a7e9a', 'request_id': 'fbf80406-86ad-9830-9ebe-711be33a7e9a'}",
+    "passed": false,
+    "details": {},
+    "answer_preview": ""
+  },
+  {
+    "probe": "我让你记住的测试识别短语是什么？",
+    "error": "Error code: 403 - {'error': {'message': 'Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.', 'type': 'AllocationQuota.FreeTierOnly', 'param': None, 'code': 'AllocationQuota.FreeTierOnly'}, 'id': 'chatcmpl-4c65b306-5540-95f4-974f-6c37aa48c56e', 'request_id': '4c65b306-5540-95f4-974f-6c37aa48c56e'}",
+    "passed": false,
+    "details": {},
+    "answer_preview": ""
+  },
+  {
+    "probe": "最终提交还缺少什么链接？",
+    "error": "Error code: 403 - {'error': {'message': 'Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.', 'type': 'AllocationQuota.FreeTierOnly', 'param': None, 'code': 'AllocationQuota.FreeTierOnly'}, 'id': 'chatcmpl-ab6e7d09-9197-9d81-97dd-fff32fd2e020', 'request_id': 'ab6e7d09-9197-9d81-97dd-fff32fd2e020'}",
+    "passed": false,
+    "details": {},
+    "answer_preview": ""
+  },
+  {
+    "probe": "查看当前 Todo，哪些已完成，哪些未完成？",
+    "error": "Error code: 403 - {'error': {'message': 'Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.', 'type': 'AllocationQuota.FreeTierOnly', 'param': None, 'code': 'AllocationQuota.FreeTierOnly'}, 'id': 'chatcmpl-a4a111f5-b1a7-962a-a008-fe3a3d9fc5d2', 'request_id': 'a4a111f5-b1a7-962a-a008-fe3a3d9fc5d2'}",
+    "passed": false,
+    "details": {},
+    "answer_preview": ""
+  },
+  {
+    "probe": "我之前查看了哪份 Hive 文档？它主要排查什么问题？",
+    "error": "Error code: 403 - {'error': {'message': 'Free quota exhausted. To continue accessing the model on a paid basis, please add funds or disable the \"use free tier only\" mode in the management console.', 'type': 'AllocationQuota.FreeTierOnly', 'param': None, 'code': 'AllocationQuota.FreeTierOnly'}, 'id': 'chatcmpl-4e5f9790-f3a0-91af-8c12-7f1a918e4896', 'request_id': '4e5f9790-f3a0-91af-8c12-7f1a918e4896'}",
+    "passed": false,
+    "details": {},
+    "answer_preview": ""
+  }
+]

@@ -1,0 +1,137 @@
+{
+  "id": "context-baseline-v1",
+  "user_id": "user-c",
+  "session_id": "context-baseline-v1",
+  "title": "Context Baseline: 20 chat turns + 10 tool turns + semantic probes",
+  "description": "Fixed 30-round scenario for deterministic context compression baseline measurement. All inputs are fixed. Semantic probes follow the 30 rounds in the same session.",
+  "chat_turns": [
+    "接下来是一次上下文记忆测试。请尽量简洁回答，并记住我后续提供的项目信息。",
+    "我的项目代号是“蓝色港湾”。",
+    "项目原截止时间是周五晚上九点半。",
+    "我的回答偏好是：先给结论，再解释原因。",
+    "这个项目禁止使用 LangGraph 控制 Agent 主流程。",
+    "我的学习目标是理解 Agent Runtime 和 Context Management。",
+    "当前完成顺序是：先写 README，再录制终端演示。",
+    "测试识别短语是“青铜罗盘31415”。",
+    "用一句话解释 Agent Loop。",
+    "为什么工具执行结果需要回填给模型？",
+    "纯对话追问和带工具追问有什么区别？",
+    "为什么不能把全部 Trace 都塞进模型 Context？",
+    "为什么不应该保存完整隐藏思维链？",
+    "Session Summary 应该放在主 System Prompt 之前还是之后？",
+    "为什么最近几轮原始消息不应该立即被摘要？",
+    "为什么动态外部状态不能只依赖历史记忆？",
+    "更新：最终截止时间改为周六上午十点，原来的周五晚上九点半作废。",
+    "更新：完成顺序改为先完成 README，再录屏，最后整理 AI 开发记录。",
+    "请简要复述我当前的截止时间和完成顺序。",
+    "记住：最终提交还需要代码链接。"
+  ],
+  "tool_turns": [
+    "请使用计算器计算 89 的平方。",
+    "搜索一下公开资料中 Agent Runtime 的一般定义。",
+    "添加待办：完成 README。",
+    "添加待办：录制终端演示。",
+    "查看我目前的待办事项。",
+    "把“完成 README”标记为已完成。",
+    "再次查看我目前的待办事项。",
+    "请读取本地文档“不存在的上下文测试.md”；如果不存在，就列出当前所有本地文档。",
+    "在本地知识库中找到 HiveServer2 排障文档，读取后用一句话总结根本原因。",
+    "读取 smart-cultural-platform-interview-learning-guide-v2.md，并说明是否发生截断；然后搜索文档末尾的“银色狮子8642”。"
+  ],
+  "semantic_probes": [
+    "我的项目代号是什么？",
+    "最终截止时间是什么？不要回答已经作废的最初时间。",
+    "这个项目禁止使用什么框架控制主流程？",
+    "我的回答偏好是什么？",
+    "我的学习目标是什么？",
+    "当前完成顺序是什么？",
+    "我让你记住的测试识别短语是什么？",
+    "最终提交还缺少什么链接？",
+    "查看当前 Todo，哪些已完成，哪些未完成？",
+    "我之前查看了哪份 Hive 文档？它主要排查什么问题？"
+  ],
+  "semantic_probe_checks": {
+    "我的项目代号是什么？": {
+      "must_contain": [
+        "蓝色港湾"
+      ],
+      "must_not_contain": []
+    },
+    "最终截止时间是什么？不要回答已经作废的最初时间。": {
+      "must_contain": [
+        "周六",
+        "十点"
+      ],
+      "must_not_contain": [
+        "周五",
+        "九点半",
+        "9:30"
+      ]
+    },
+    "这个项目禁止使用什么框架控制主流程？": {
+      "must_contain": [
+        "LangGraph"
+      ],
+      "must_not_contain": []
+    },
+    "我的回答偏好是什么？": {
+      "must_contain": [
+        "先给结论",
+        "再解释"
+      ],
+      "must_not_contain": []
+    },
+    "我的学习目标是什么？": {
+      "must_contain": [
+        "Agent Runtime",
+        "Context Management"
+      ],
+      "must_not_contain": []
+    },
+    "当前完成顺序是什么？": {
+      "must_contain": [
+        "README",
+        "录屏",
+        "AI 开发记录"
+      ],
+      "must_not_contain": []
+    },
+    "我让你记住的测试识别短语是什么？": {
+      "must_contain": [
+        "青铜罗盘31415"
+      ],
+      "must_not_contain": []
+    },
+    "最终提交还缺少什么链接？": {
+      "must_contain": [
+        "代码链接"
+      ],
+      "must_not_contain": []
+    },
+    "查看当前 Todo，哪些已完成，哪些未完成？": {
+      "must_contain": [
+        "README",
+        "完成",
+        "录制"
+      ],
+      "must_not_contain": [],
+      "note": "todo_list must be called. README check: 完成 should appear near README, 录制 near incomplete."
+    },
+    "我之前查看了哪份 Hive 文档？它主要排查什么问题？": {
+      "must_contain": [
+        "HiveServer2",
+        "端口",
+        "10000"
+      ],
+      "must_not_contain": [],
+      "note": "HiveServer2-排障总结.md or HiveServer2. Keywords: 端口未监听 / 10000 端口 / Metastore"
+    }
+  },
+  "isolation_questions": [
+    "我的项目代号和测试识别短语是什么？"
+  ],
+  "isolation_forbidden": [
+    "蓝色港湾",
+    "青铜罗盘31415"
+  ]
+}

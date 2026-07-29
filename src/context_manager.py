@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import time
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -103,8 +104,20 @@ def estimate_tokens(messages: list[dict[str, Any]]) -> int:
 
 
 class ContextManager:
-    def __init__(self, policy: ContextPolicy | None = None) -> None:
+    def __init__(
+        self,
+        policy: ContextPolicy | None = None,
+        summarizer: Any | None = None,
+        summary_mode: str = "deterministic",
+    ) -> None:
         self._policy = policy or ContextPolicy()
+        self._summarizer = summarizer
+        if summary_mode not in ("deterministic", "hybrid"):
+            raise ValueError(
+                f"summary_mode must be 'deterministic' or 'hybrid', got '{summary_mode}'"
+            )
+        self._summary_mode = summary_mode
+        self.last_compression_event: dict[str, Any] | None = None
 
     def prepare_session(self, session: Session) -> bool:
         if not session.messages:
@@ -121,12 +134,55 @@ class ContextManager:
             return False
 
         to_compress = session.messages[:boundary]
-        summary_entries = _summarize_messages(to_compress, self._policy.max_item_chars)
-        new_summary = _merge_summary(
-            session.summary, summary_entries, self._policy.max_summary_chars
-        )
-        session.summary = new_summary
+
+        tokens_before = estimate_tokens(session.messages)
+        msgs_before = len(session.messages)
+        summary_chars_before = len(session.summary)
+
+        semantic_attempted = False
+        semantic_succeeded = False
+        semantic_latency_ms = 0.0
+
+        if self._summary_mode == "hybrid" and self._summarizer is not None:
+            semantic_attempted = True
+            start = time.monotonic()
+            try:
+                semantic_text = self._summarizer.summarize(
+                    previous_summary=session.summary,
+                    messages=to_compress,
+                    max_output_chars=self._policy.max_summary_chars,
+                )
+                semantic_latency_ms = (time.monotonic() - start) * 1000
+                if semantic_text:
+                    session.summary = semantic_text
+                    semantic_succeeded = True
+            except Exception:
+                semantic_latency_ms = (time.monotonic() - start) * 1000
+
+        if not semantic_succeeded:
+            summary_entries = _summarize_messages(to_compress, self._policy.max_item_chars)
+            session.summary = _merge_summary(
+                session.summary, summary_entries, self._policy.max_summary_chars
+            )
+
         session.messages = session.messages[boundary:]
+
+        tokens_after = estimate_tokens(session.messages)
+        msgs_after = len(session.messages)
+        summary_chars_after = len(session.summary)
+
+        self.last_compression_event = {
+            "summary_mode": self._summary_mode,
+            "semantic_summary_attempted": semantic_attempted,
+            "semantic_summary_succeeded": semantic_succeeded,
+            "fallback_used": semantic_attempted and not semantic_succeeded,
+            "semantic_summary_latency_ms": round(semantic_latency_ms, 1),
+            "summary_chars_before": summary_chars_before,
+            "summary_chars_after": summary_chars_after,
+            "messages_compressed": msgs_before - msgs_after,
+            "estimated_tokens_before": tokens_before,
+            "estimated_tokens_after": tokens_after,
+        }
         return True
 
     def build_messages(

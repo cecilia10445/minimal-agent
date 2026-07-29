@@ -1,0 +1,18 @@
+[
+  {
+    "check_type": "same_user_diff_session",
+    "user_id": "user-c",
+    "session_id": "context-isolation-check",
+    "question": "我的项目代号和测试识别短语是什么？",
+    "leaked_keywords": [],
+    "leak_count": 0
+  },
+  {
+    "check_type": "diff_user_same_session",
+    "user_id": "user-d",
+    "session_id": "context-baseline-v1",
+    "question": "我的项目代号和测试识别短语是什么？",
+    "leaked_keywords": [],
+    "leak_count": 0
+  }
+]

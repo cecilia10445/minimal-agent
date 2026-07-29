@@ -1,0 +1,41 @@
+{
+  "generated_at": "2026-07-29T23:14:21.390842",
+  "total": 1,
+  "passed": 1,
+  "failed": 0,
+  "results": [
+    {
+      "id": "DOC-LONG-001",
+      "title": "Long document truncation metadata and disclosure",
+      "status": "passed",
+      "step_results": [
+        {
+          "step": 1,
+          "status": "passed",
+          "input": "读取 长文档截断测试.md",
+          "tools_called": [
+            "read_docs"
+          ],
+          "forbidden_called": [],
+          "expected_tools_ok": true,
+          "forbidden_tools_ok": true,
+          "answer_contains_ok": true,
+          "answer_not_contains_ok": true
+        },
+        {
+          "step": 2,
+          "status": "passed",
+          "input": "在本地知识库搜索 银色狮子8642",
+          "tools_called": [
+            "search_docs"
+          ],
+          "forbidden_called": [],
+          "expected_tools_ok": true,
+          "forbidden_tools_ok": true,
+          "answer_contains_ok": true,
+          "answer_not_contains_ok": true
+        }
+      ]
+    }
+  ]
+}

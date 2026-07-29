@@ -1,0 +1,44 @@
+{
+  "policy": {
+    "max_estimated_tokens": 1,
+    "keep_recent_user_turns": 2,
+    "max_summary_chars": 500,
+    "max_item_chars": 100
+  },
+  "compression": {
+    "triggered": true,
+    "boundary_index": 23
+  },
+  "before": {
+    "total": 4,
+    "user": 2,
+    "assistant": 2,
+    "assistant_with_tool_calls": 1,
+    "tool": 0
+  },
+  "after": {
+    "total": 4,
+    "user": 2,
+    "assistant": 2,
+    "assistant_with_tool_calls": 1,
+    "tool": 0
+  },
+  "summary": {
+    "exists": true,
+    "length_chars": 513,
+    "sha256": "5d7ff5319cb8f741",
+    "content": "- 用户请求：你好，今天天气怎么样？\n- 助手回答：今天天气晴朗，气温25度。\n- 用户请求：计算 15 乘以 23\n- 调用工具：calculator，{\"expression\":\"15*23\"}\n- 工具结果（calculator）：{\"ok\": true, \"result\": \"345.0\"}\n- 助手回答：15 * 23 = 345\n- 用户请求：计算非法表达式\n- 调用工具：calculator，{\"expression\":\"__import__\"}\n- 工具结果（calculator）：{\"ok\": false, \"error_type\": \"ToolExecutionError\", \"message\": \"Illegal expression\"}\n- 助手回答：该表达式不合法，无法计算。\n- 用户请求：同时计算 100/5 和 2**8\n- 调用工具：calculator，{\"expression\":\"100/5\"}\n- 调用工具：calculator，{\"expression\":\"2**8\"}\n- 工具结果（calculator）：{\"ok\": true, \"resul\n(较早内容已进一步压缩)"
+  },
+  "built_messages_count": 6,
+  "orphan_tool_results": [],
+  "missing_tool_results": [
+    "call_wea"
+  ],
+  "tool_calls_in_messages": [
+    {
+      "id": "call_wea",
+      "name": "search",
+      "args_preview": "{\"keywords\":\"tomorrow weather\"}"
+    }
+  ]
+}

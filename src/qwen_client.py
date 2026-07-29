@@ -107,16 +107,18 @@ class OpenAICompatibleLLMClient:
         tools: list[dict[str, Any]],
     ) -> LLMResponse:
         try:
-            raw = self._client.chat.completions.create(
+            kwargs: dict[str, Any] = dict(
                 model=self._settings.model,
                 messages=messages,
-                tools=tools,
-                tool_choice="auto",
                 temperature=0,
-                extra_body={
-                    "enable_thinking": self._settings.enable_thinking,
-                },
             )
+            if tools:
+                kwargs["tools"] = tools
+                kwargs["tool_choice"] = "auto"
+            kwargs["extra_body"] = {
+                "enable_thinking": self._settings.enable_thinking,
+            }
+            raw = self._client.chat.completions.create(**kwargs)
         except openai.APITimeoutError as e:
             raise _map_openai_error(e) from e
         except openai.APIConnectionError as e:

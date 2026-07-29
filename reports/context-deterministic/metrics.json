@@ -1,0 +1,38 @@
+{
+  "compression": {
+    "compression_event_count": 0,
+    "tokens_before_total": 0,
+    "tokens_after_total": 0,
+    "average_compression_ratio": 0,
+    "average_token_reduction_percent": 0,
+    "maximum_token_reduction_percent": 0,
+    "minimum_token_reduction_percent": 0
+  },
+  "structure": {
+    "orphan_tool_result_count": 0,
+    "missing_tool_result_count": 0
+  },
+  "semantic_probes": {
+    "core_fact_recall_correct": 0,
+    "core_fact_recall_total": 10,
+    "core_fact_recall_rate": 0.0
+  },
+  "isolation": {
+    "cross_session_leak_count": 0,
+    "cross_user_leak_count": 0
+  },
+  "todo": {
+    "todo_state_correct": false,
+    "todo_tool_was_called": false
+  },
+  "overhead": {
+    "real_llm_call_count": 0,
+    "answer_chars_total": 0,
+    "total_latency_ms": 6625.0,
+    "compression_api_call_count": 0,
+    "semantic_summary_call_count": 0,
+    "semantic_summary_success_count": 0,
+    "semantic_summary_fallback_count": 0,
+    "semantic_summary_latency_ms_total": 0
+  }
+}

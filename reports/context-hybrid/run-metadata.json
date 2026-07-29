@@ -1,0 +1,20 @@
+{
+  "scenario_id": "context-baseline-v1",
+  "user_id": "user-c",
+  "session_id": "context-baseline-v1",
+  "db_path": "reports\\context-hybrid\\context-baseline.db",
+  "started_at": "2026-07-30T02:19:27.991477",
+  "context_policy": {
+    "max_estimated_tokens": 1800,
+    "keep_recent_user_turns": 4,
+    "max_summary_chars": 3000,
+    "max_item_chars": 300,
+    "is_accelerated": false,
+    "production_default_max_tokens": 6000
+  },
+  "finished_at": "2026-07-30T02:25:21.544167",
+  "status": "failed",
+  "notes": [
+    "Semantic probe recall: 8/10"
+  ]
+}

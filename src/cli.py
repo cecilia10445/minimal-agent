@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import argparse
+import time
 import uuid
 from datetime import datetime
+from pathlib import Path
 
 from dotenv import load_dotenv
 
@@ -34,6 +36,17 @@ def _parse_args() -> argparse.Namespace:
         "--db-path",
         default=None,
         help="SQLite database path (overrides AGENT_SESSION_DB_PATH env var)",
+    )
+    parser.add_argument(
+        "--script",
+        default=None,
+        help="Path to script file with one user input per line (for recording demos)",
+    )
+    parser.add_argument(
+        "--step-delay",
+        type=float,
+        default=0.0,
+        help="Delay in seconds between script steps (for recording pace)",
     )
     return parser.parse_args()
 
@@ -135,9 +148,32 @@ def main() -> None:
     print(f"  db_path:    {db_display}")
     print("Type /help for commands.")
 
+    script_lines: list[str] | None = None
+    script_index = 0
+    if args.script:
+        script_path = Path(args.script)
+        if not script_path.exists():
+            print(f"Script file not found: {args.script}")
+            return
+        script_lines = script_path.read_text(encoding="utf-8").splitlines()
+        script_lines = [ln.strip() for ln in script_lines if ln.strip() and not ln.strip().startswith("#")]
+        print(f"Script mode: {len(script_lines)} commands loaded from {args.script}")
+        if args.step_delay > 0:
+            print(f"Step delay: {args.step_delay}s")
+
     while True:
         try:
-            raw = input(f"\n[{user_id} @ {current_session_id}] > ").strip()
+            if script_lines is not None:
+                if script_index >= len(script_lines):
+                    print("\nScript finished.")
+                    break
+                raw = script_lines[script_index]
+                script_index += 1
+                print(f"\n[{user_id} @ {current_session_id}] > {raw}")
+                if args.step_delay > 0:
+                    time.sleep(args.step_delay)
+            else:
+                raw = input(f"\n[{user_id} @ {current_session_id}] > ").strip()
         except (EOFError, KeyboardInterrupt):
             print("\nGoodbye!")
             break

@@ -1,0 +1,105 @@
+[
+  {
+    "passed": true,
+    "details": {
+      "must_contain:蓝色港湾": true
+    },
+    "answer_preview": "你的项目代号是“蓝色港湾”。",
+    "probe": "我的项目代号是什么？",
+    "latency_ms": 26844.0
+  },
+  {
+    "passed": false,
+    "details": {
+      "must_contain:周六": true,
+      "must_contain:十点": true,
+      "must_contain:10": false,
+      "must_not_contain:周五": true,
+      "must_not_contain:九点半": true,
+      "must_not_contain:9:30": true
+    },
+    "answer_preview": "最终截止时间是周六上午十点。",
+    "probe": "最终截止时间是什么？不要回答已经作废的最初时间。",
+    "latency_ms": 38297.0
+  },
+  {
+    "passed": true,
+    "details": {
+      "must_contain:LangGraph": true
+    },
+    "answer_preview": "禁止使用 LangGraph 控制 Agent 主流程。",
+    "probe": "这个项目禁止使用什么框架控制主流程？",
+    "latency_ms": 37281.0
+  },
+  {
+    "passed": true,
+    "details": {
+      "must_contain:先给结论": true,
+      "must_contain:再解释": true
+    },
+    "answer_preview": "你的回答偏好是：先给结论，再解释原因。",
+    "probe": "我的回答偏好是什么？",
+    "latency_ms": 52891.0
+  },
+  {
+    "passed": true,
+    "details": {
+      "must_contain:Agent Runtime": true,
+      "must_contain:Context Management": true
+    },
+    "answer_preview": "你的学习目标是理解 Agent Runtime 和 Context Management。",
+    "probe": "我的学习目标是什么？",
+    "latency_ms": 49547.0
+  },
+  {
+    "passed": true,
+    "details": {
+      "must_contain:README": true,
+      "must_contain:录屏": true,
+      "must_contain:AI 开发记录": true
+    },
+    "answer_preview": "当前完成顺序是：先完成 README，再录屏，最后整理 AI 开发记录。",
+    "probe": "当前完成顺序是什么？",
+    "latency_ms": 1500.0
+  },
+  {
+    "passed": true,
+    "details": {
+      "must_contain:青铜罗盘31415": true
+    },
+    "answer_preview": "你让我记住的测试识别短语是“青铜罗盘31415”。",
+    "probe": "我让你记住的测试识别短语是什么？",
+    "latency_ms": 1296.0
+  },
+  {
+    "passed": true,
+    "details": {
+      "must_contain:代码链接": true
+    },
+    "answer_preview": "最终提交还缺少代码链接。",
+    "probe": "最终提交还缺少什么链接？",
+    "latency_ms": 1547.0
+  },
+  {
+    "passed": false,
+    "details": {
+      "must_contain:READ ME": false,
+      "must_contain:完成": true,
+      "must_contain:录制": true
+    },
+    "answer_preview": "当前 Todo 列表状态如下：\n\n**已完成：**\n1. 完成 README\n\n**未完成：**\n1. 录制终端演示\n\n（注：根据之前的对话历史，“整理 AI 开发记录”和“准备代码链接”也是待办事项，但当前的 Todo 列表中只显示了上述两项。如果“整理 AI 开发记录”等任务未被添加到 Todo 系统中，则它们不在列表中。）",
+    "probe": "查看当前 Todo，哪些已完成，哪些未完成？",
+    "latency_ms": 3641.0
+  },
+  {
+    "passed": true,
+    "details": {
+      "must_contain:HiveServer2": true,
+      "must_contain:端口": true,
+      "must_contain:10000": true
+    },
+    "answer_preview": "你之前查看的文档是 `HiveServer2-排障总结.md`。\n\n它主要排查的问题是：**HiveServer2 无法监听 10000 端口**。\n\n根本原因是初始化时调用 Metastore 的通知事件 API 失败，修复方法是将 Metastore 配置 `hive.metastore.event.db.notification.api.auth` 设为 `false` 并重启 Metast...",
+    "probe": "我之前查看了哪份 Hive 文档？它主要排查什么问题？",
+    "latency_ms": 2312.0
+  }
+]

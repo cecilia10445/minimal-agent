@@ -1,0 +1,21 @@
+{
+  "scenario_id": "context-baseline-v1",
+  "user_id": "user-c",
+  "session_id": "context-baseline-v1",
+  "db_path": "reports\\context-deterministic\\context-baseline.db",
+  "started_at": "2026-07-30T02:50:38.538266",
+  "context_policy": {
+    "max_estimated_tokens": 1800,
+    "keep_recent_user_turns": 4,
+    "max_summary_chars": 3000,
+    "max_item_chars": 300,
+    "is_accelerated": true,
+    "production_default_max_tokens": 6000
+  },
+  "finished_at": "2026-07-30T02:50:47.420747",
+  "status": "failed",
+  "notes": [
+    "No compression triggered",
+    "Semantic probe recall: 0/10"
+  ]
+}
