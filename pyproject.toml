@@ -1,0 +1,15 @@
+[project]
+name = "assistant-agent"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "openai>=1.0,<2.0",
+    "python-dotenv>=1.0,<2.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "integration: marks tests as integration tests",
+    "real_llm: marks tests that call real LLM API (requires DASHSCOPE_API_KEY)",
+]
